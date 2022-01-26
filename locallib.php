@@ -36,8 +36,25 @@ defined('MOODLE_INTERNAL') || die();
  * Connect an opencast series with moodle.
  * @param int $customsemid db id of the customfield
  */
-function local_ustreamseries_connect($courseid) {
+function local_ustreamseries_connect($courseid, $seriesid) {
     global $DB;
     //TODO
 }
 
+function local_ustreamseries_get_all_unconnected_course_series($courseid) {
+    //TODO returns array of ['id' => 'name'];
+}
+
+function local_ustreamseries_get_connected_course_series($course) {
+    //TODO
+    return false;
+    //TODO returns array of ['id' => 'name'];
+}
+
+function local_ustreamseries_create_course_series($courseid, $name) {
+    
+}
+
+function local_ustreamseries_is_lv($courseid) {
+    
+}
