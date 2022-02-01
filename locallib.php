@@ -24,6 +24,11 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+define('LOCAL_USTREAMSERIES_CREATE','create');
+define('LOCAL_USTREAMSERIES_CREATE_LV','createlv');
+define('LOCAL_USTREAMSERIES_LINK','link');
+define('LOCAL_USTREAMSERIES_LINK_OTHER','linkother');
+
 /**
  *
  * @package       local_ustreamseries
@@ -47,14 +52,19 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
 
 function local_ustreamseries_get_connected_course_series($course) {
     //TODO
-    return false;
+    return ['asdf' => 'This series is connected'];
     //TODO returns array of ['id' => 'name'];
 }
 
-function local_ustreamseries_create_course_series($courseid, $name) {
+function local_ustreamseries_create_series($courseid, $courseseries, $name) {
     
 }
 
+function local_ustreamseries_check_series_exists($seriesid) {
+    //TODO
+    return true;
+}
+
 function local_ustreamseries_is_lv($courseid) {
-    
+    return true;
 }

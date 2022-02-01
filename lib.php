@@ -31,7 +31,85 @@ defined('MOODLE_INTERNAL') || die;
  * @param navigation_node $navigation
  */
 function local_ustreamseries_extend_navigation($navigation) {
-//TODO
+    global $USER, $PAGE, $DB;
+    
+    if (empty($USER->id)) {
+        return;
+    }
+    
+    if ('admin-index' === $PAGE->pagetype) {
+        $exists = $DB->record_exists('capabilities', array('name' => 'local/contactlist:view'));
+        
+        if (!$exists) {
+            return;
+        }
+    }
+    
+    $context = context::instance_by_id($PAGE->context->id);
+    $isvalidcontext = ($context instanceof context_course || $context instanceof context_module);
+    if (!$isvalidcontext) {
+        return;
+    }
+    
+    $coursecontext = null;
+    if ($context instanceof context_module) {
+        $coursecontext = $context->get_course_context();
+    } else {
+        $coursecontext = $context;
+    }
+    
+    if (!has_capability('local/ustreamseries:view', $coursecontext, $USER)) {
+        return;
+    }
+    
+    $rootnodes = array($navigation->find('mycourses', navigation_node::TYPE_ROOTNODE),
+        $navigation->find('courses', navigation_node::TYPE_ROOTNODE));
+    foreach ($rootnodes as $mycoursesnode) {
+        if (empty($mycoursesnode)) {
+            continue;
+        }
+        $beforekey = null;
+        $participantsnode = $mycoursesnode->find('grades', navigation_node::TYPE_CONTAINER);
+        if ($participantsnode) { // Add the navnode after participants
+            $keys = $participantsnode->parent->get_children_key_list();
+            $igrades = array_search('grades', $keys);
+            if ($igrades !== false) {
+                if (isset($keys[$igrades + 1])) {
+                    $beforekey = $keys[$igrades + 1];
+                }
+            }
+        }
+        
+        if ($beforekey == null) { // No participants node found, fall back to other variants!
+            $activitiesnode = $mycoursesnode->find('activitiescategory', navigation_node::TYPE_CATEGORY);
+            if ($activitiesnode == false) {
+                $custom = $mycoursesnode->find_all_of_type(navigation_node::TYPE_CUSTOM);
+                $sections = $mycoursesnode->find_all_of_type(navigation_node::TYPE_SECTION);
+                if (!empty($custom)) {
+                    $first = reset($custom);
+                    $beforekey = $first->key;
+                } else if (!empty($sections)) {
+                    $first = reset($sections);
+                    $beforekey = $first->key;
+                }
+            } else {
+                $beforekey = 'activitiescategory';
+            }
+        }
+        
+        $url = new moodle_url('/local/ustreamseries/index.php', array('id' => $coursecontext->instanceid));
+        $title = get_string('navigationname', 'local_ustreamseries');
+        $pix = null;//TODO
+        $childnode = navigation_node::create($title, $url, navigation_node::TYPE_CUSTOM, 'ustreamseries', 'ustreamseries', $pix);
+        
+        if (($mycoursesnode !== false && $mycoursesnode->has_children())) {
+            $currentcourseinmycourses = $mycoursesnode->find($coursecontext->instanceid, navigation_node::TYPE_COURSE);
+            if ($currentcourseinmycourses) {
+                $currentcourseinmycourses->add_node($childnode, $beforekey);
+                break;
+            }
+        }
+    }
 }
 
 /**
@@ -45,6 +123,7 @@ function local_ustreamseries_extend_navigation($navigation) {
  */
 function local_ustreamseries_extend_settings_navigation($settings, $navigationnode) {
 //TODO
+
 }
 
 

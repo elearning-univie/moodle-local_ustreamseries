@@ -27,6 +27,24 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
 
+    'local/ustreamseries:create' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        ],
+    ],
+    'local/ustreamseries:create_lv' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        ],
+    ],
     'local/ustreamseries:link' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -36,7 +54,7 @@ $capabilities = [
             'editingteacher' => CAP_ALLOW,
         ],
     ],
-    'local/ustreamseries:create' => [
+    'local/ustreamseries:link_other' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [

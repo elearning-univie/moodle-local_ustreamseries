@@ -21,7 +21,6 @@
  * @copyright  2022 University of Vienna
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-<?php
 // This file is part of mod_offlinequiz for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -47,13 +46,26 @@
  * @since         Moodle 2.2
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
-
 require_once("../../config.php");
 require_once("locallib.php");
 
 $id = required_param('id', PARAM_INT);
 require_login($id);
 $coursecontext = context_course::instance($id);
-require_capability('', $coursecontext);
+require_capability('local/ustreamseries:view', $coursecontext);
 
-$PAGE->set_url('/local/ustreamservices/index.php', array('id' => $id));
+$course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
+if(local_ustreamseries_get_connected_course_series($course)) {
+    //TODO
+    $redirecturl = new moodle_url('/block/opencast/', array('id' => $id));
+    redirect($redirecturl);
+}
+$PAGE->set_url('/local/ustreamseries/index.php', array('id' => $id));
+$PAGE->set_pagelayout('incourse');
+
+$PAGE->set_title(get_string('ustream', 'local_ustreamseries'));
+$PAGE->set_heading($course->fullname);
+echo $OUTPUT->header();
+$warning = get_string('warning_noustream','local_ustreamseries', $CFG->wwwroot . '/local/ustreamseries/link_stream.php?id=' . $id);
+\core\notification::warning($warning);
+echo $OUTPUT->footer();
