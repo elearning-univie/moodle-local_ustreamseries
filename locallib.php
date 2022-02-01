@@ -160,8 +160,9 @@ function local_ustreamseries_check_series_exists($seriesid) {
 }
 
 function local_ustreamseries_is_lv($courseid) {
-    return true;
-
+    global $DB;
+    $result = $DB->get_field('course', 'shortname', ['id' => $courseid]);
+    return preg_match('/^\d{4}[WS] \d*-\d* .*/', $result);
 }
 
  /**
