@@ -47,7 +47,7 @@ class link_stream_form extends \moodleform {
         global $PAGE, $USER, $COURSE;
         $mform = $this->_form;
         $courseid = $COURSE->id;
-        $context = \context_course::instance($COURSE->id);
+        $context = \context_course::instance($courseid);
         $options = [];
         if(\has_capability('local/ustreamseries:create', $context)) {
             $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');

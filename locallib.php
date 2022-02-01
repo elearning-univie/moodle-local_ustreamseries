@@ -79,14 +79,15 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
     $api = api::get_instance();
 
     $series = $api->oc_get('/v1/campus/univie/series/byMoodleCourseId/' . $courseid);
-
     $response = json_decode($series);
 
+    $alreadyconnected = local_ustreamseries_get_connected_course_series($courseid);
+    
     if ($response) {
         $connectedSeries = local_ustreamseries_get_connected_course_series_array($courseid);
-        $result = array ();
+        $result = [];
         foreach ($response as $singleseries) {
-            if (!in_array($singleseries->seriesId, $connectedSeries)) {
+            if (!array_key_exists($singleseries->seriesId, $connectedSeries) && !array_key_exists($singleseries->seriesId, $alreadyconnected)) {
                     $result[$singleseries->seriesId] = $singleseries->title;
             }
         }
@@ -94,7 +95,7 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
             return $result;
         }
     } 
-    return null;
+    return ['emptyseries' => 'Leere Serie'];
 }
 
 /**
@@ -150,13 +151,15 @@ function local_ustreamseries_get_connected_course_series_array($courseid) {
 }
 
 
-function local_ustreamseries_create_course_series($courseid, $name) {
+function local_ustreamseries_create_series($courseid, $courseseries, $name) {
+    $api = apibridge::get_instance();
     //TODO
 }
 
 function local_ustreamseries_check_series_exists($seriesid) {
-    //TODO
-    return true;
+    $api = apibridge::get_instance();
+    $series = $api->get_series_by_identifier($seriesid);
+    return (bool) $series;
 }
 
 function local_ustreamseries_is_lv($courseid) {
