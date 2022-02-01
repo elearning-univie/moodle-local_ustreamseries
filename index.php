@@ -55,7 +55,7 @@ $coursecontext = context_course::instance($id);
 require_capability('local/ustreamseries:view', $coursecontext);
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
-if(local_ustreamseries_get_connected_course_series($course)) {
+if(local_ustreamseries_get_connected_course_series($course->id)) {
     //TODO
     $redirecturl = new moodle_url('/block/opencast/', array('id' => $id));
     redirect($redirecturl);
