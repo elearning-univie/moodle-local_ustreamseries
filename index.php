@@ -57,7 +57,7 @@ require_capability('local/ustreamseries:view', $coursecontext);
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 if(local_ustreamseries_get_connected_course_series($course->id)) {
     //TODO
-    $redirecturl = new moodle_url('/block/opencast/index.php', array('courseid' => $id));
+    $redirecturl = new moodle_url('/blocks/opencast/index.php', array('courseid' => $id));
     redirect($redirecturl);
 }
 $PAGE->set_url('/local/ustreamseries/index.php', array('id' => $id));
