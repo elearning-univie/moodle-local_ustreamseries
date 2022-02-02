@@ -44,6 +44,7 @@ $string['link_stream_settingsmenu'] = 'Link new u:stream to this course';
 $string['navigationname'] = 'u:stream';
 $string['no_series'] = 'There is no series available!';
 $string['pluginname'] = 'u:stream series connector';
+$string['runbutton'] = 'Run';
 $string['series_editable'] = 'WARNING! All series connected here are editable by ALL course instructors of this course. Only link your u:stream series if you are OK with that. We are working on a more appropriate solution. Thank you for your patience.';
 $string['series_creation_success'] = 'Series created successfully';
 $string['series_creation_failed'] = 'Error while creating series';

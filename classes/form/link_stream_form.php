@@ -93,7 +93,7 @@ class link_stream_form extends \moodleform {
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
 
         $mform->setType('seriesid', PARAM_ALPHANUMEXT);
-        $this->add_action_buttons(true);
+        $this->add_action_buttons(true, get_string('runbutton', 'local_ustreamseries'));
     }
     
     
