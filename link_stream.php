@@ -67,7 +67,7 @@ $PAGE->set_heading($course->fullname);
 $mform = new \local_ustreamseries\form\link_stream_form();
 
 if($mform->is_cancelled()) {
-    $redirecturl = new moodle_url('/blocks/opencast/index.php', array('courseid' => $id));
+    $redirecturl = new moodle_url('/course/view.php', array('id' => $id));
     redirect($redirecturl);
 }
 
