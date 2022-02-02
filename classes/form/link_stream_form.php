@@ -127,7 +127,9 @@ class link_stream_form extends \moodleform {
                 require_capability('local/ustreamseries:link_other', $context);
                 $connected = local_ustreamseries_get_connected_course_series($COURSE->id);
                 if ($connected) {
-                    if (array_key_exists($data['seriesid'], $connected) || !local_ustreamseries_check_series_exists($data['seriesid'])) {
+                    if (array_key_exists($data['seriesid'], $connected)) {
+                        $errors['seriesid'] = get_string('link_stream_form_seriesalreadyconnected', 'local_ustreamseries');
+                    } else if (!local_ustreamseries_check_series_exists($data['seriesid'])) {
                         $errors['seriesid'] = get_string('link_stream_form_seriesnotexistsorconnected', 'local_ustreamseries');
                     }
                 }

@@ -110,7 +110,7 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
             return $result;
         }
     } 
-    return ['emptyseries' => 'Leere Serie'];
+    return ['emptyseries' => get_string('no_series', 'local_ustreamseries')];
 }
 
 /**
@@ -138,33 +138,6 @@ function local_ustreamseries_get_connected_course_series($courseid) {
         return null;
     }
 }
-
-
-/**
- * Get a simple array, containing all Opencast series IDs, already imported into this course.
- * 
- * @param int $courseid Moodle Kurs ID
- * @return array $seriestitles
- */
-function local_ustreamseries_get_connected_course_series_array($courseid) {
-    $apibridge = apibridge::get_instance();
-    
-    $series = $apibridge->get_course_series($courseid);
-    $result = [];
-    if ($series) {
-        foreach ($series as $singleseries) {
-            $result[] = $singleseries->series;
-        }
-    }
-    
-    if (!empty($result)) {
-        return $result;
-    } else {
-        return null;
-    }
-    
-}
-
 
 function local_ustreamseries_create_series($courseid, $courseseries, $name) {
     $api = apibridge::get_instance();
@@ -205,6 +178,8 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
 
     if ($api->get_http_code() == 200) {
         $seriesacls = json_decode($response);
+    } else if ($api->get_http_code() == 404) {
+        throw new \exception(get_string('error_no_series_found', 'local_ustreamseries: '.$ocseriesid));
     } else {
         throw new \exception(get_string('error_reachustream', 'local_ustreamseries').$response);
     }
