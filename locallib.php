@@ -139,9 +139,28 @@ function local_ustreamseries_get_connected_course_series($courseid) {
     }
 }
 
-function local_ustreamseries_create_series($courseid, $courseseries, $name) {
+function local_ustreamseries_create_series($courseid, $courseseries = false, $name = null) {
+    global $USER;
+
     $api = apibridge::get_instance();
-    //TODO
+    
+    $metadatafields = null;
+    if ($name) {
+        $metadatafields = [];
+        $metadatafields[] = array('id' => 'title', 'value' => $name);
+    }
+
+    if ($courseseries) {
+        return false; // TODO: implement.
+    } else {
+        $result = $api->create_course_series($courseid, $metadatafields, $USER->id);
+    }
+
+    if ($result) {
+        return $result;
+    } else {
+        return false;
+    }
 }
 
 function local_ustreamseries_check_series_exists($seriesid) {
