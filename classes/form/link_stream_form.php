@@ -78,10 +78,10 @@ class link_stream_form extends \moodleform {
         $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
         $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
         
-        $mform->setType('linkallcourseseries', PARAM_ALPHA);
+        $mform->setType('linkallcourseseries', PARAM_BOOL);
         $options = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
         $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries', $options));
-        $mform->setType('seriesidselect', 'PARAM_ALPHANUM');
+        $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
         $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
         $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
         $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
@@ -92,7 +92,7 @@ class link_stream_form extends \moodleform {
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
 
-        $mform->setType('seriesid', PARAM_ALPHANUM);
+        $mform->setType('seriesid', PARAM_ALPHANUMEXT);
         $this->add_action_buttons(true);
     }
     

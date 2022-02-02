@@ -112,6 +112,7 @@ function local_ustreamseries_extend_navigation($navigation) {
     }
 }
 
+
 /**
  * This function extends the settings navigation block for the site.
  *
@@ -121,8 +122,14 @@ function local_ustreamseries_extend_navigation($navigation) {
  * @param settings_navigation $settings
  * @param navigation_node $navigationnode
  */
-function local_ustreamseries_extend_settings_navigation($settings, $navigationnode) {
-//TODO
+function local_ustreamseries_extend_navigation_course($coursenode, $course, $coursecontext) {
+    if ($course && $course->id != SITEID) {
+        if(has_any_capability(['local/ustreamseries:create', 'local/ustreamseries:create_lv', 'local/ustreamseries:link', 'local/ustreamseries:link_other' ], $coursecontext)) {
+            $link = new moodle_url('/local/ustreamseries/link_stream.php',['id' => $course->id]);
+            //TODO LOGO
+            $coursenode->add(get_string('link_stream_settingsmenu', 'local_ustreamseries'), $link, navigation_node::TYPE_SETTING, null, 'ustreamseries', new pix_icon('i/user', ''));
+        }
+    }
 
 }
 
