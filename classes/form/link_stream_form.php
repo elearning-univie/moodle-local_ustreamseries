@@ -52,7 +52,7 @@ class link_stream_form extends \moodleform {
         if(\has_capability('local/ustreamseries:create', $context)) {
             $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
         }
-        if(\has_capability('local/ustreamseries:create', $context)) {
+        if(\has_capability('local/ustreamseries:create', $context) && local_ustreamseries_is_lv($courseid)) {
             $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
         }
         if(has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {

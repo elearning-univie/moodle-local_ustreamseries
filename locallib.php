@@ -171,8 +171,18 @@ function local_ustreamseries_check_series_exists($seriesid) {
 
 function local_ustreamseries_is_lv($courseid) {
     global $DB;
-    $result = $DB->get_field('course', 'shortname', ['id' => $courseid]);
-    return preg_match('/^\d{4}[WS] \d*-\d* .*/', $result);
+    $shortname = $DB->get_field('course', 'shortname', ['id' => $courseid]);
+    
+    $islv = false;
+    if (preg_match('/^\d{4}[WS] \d*-\d* .*/', $shortname)) {
+        $islv =true;
+    }
+
+    if (preg_match('/^[WS]S\d{4}-.*/', $shortname)) {
+        $islv =true;
+    }
+
+    return $islv;
 }
 
  /**
