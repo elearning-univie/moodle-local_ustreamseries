@@ -80,7 +80,7 @@ class link_stream_form extends \moodleform {
         
         $mform->setType('linkallcourseseries', PARAM_BOOL);
         $options = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
-        $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries', $options));
+        $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $options);
         $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
         $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
         $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
@@ -126,9 +126,12 @@ class link_stream_form extends \moodleform {
             case LOCAL_USTREAMSERIES_LINK_OTHER:
                 require_capability('local/ustreamseries:link_other', $context);
                 $connected = local_ustreamseries_get_connected_course_series($COURSE->id);
-                if (array_key_exists($data['seriesid'], $connected) || !local_ustreamseries_check_series_exists($data['seriesid'])) {
-                    $errors['seriesid'] = get_string('link_stream_form_seriesnotexistsorconnected', 'local_ustreamseries');
-                    print_object($COURSE);
+                if ($connected) {
+                    if (array_key_exists($data['seriesid'], $connected)) {
+                        $errors['seriesid'] = get_string('link_stream_form_seriesalreadyconnected', 'local_ustreamseries');
+                    } else if (!local_ustreamseries_check_series_exists($data['seriesid'])) {
+                        $errors['seriesid'] = get_string('link_stream_form_seriesnotexistsorconnected', 'local_ustreamseries');
+                    }
                 }
                 break;
             default:

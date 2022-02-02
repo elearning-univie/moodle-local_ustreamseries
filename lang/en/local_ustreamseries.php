@@ -24,6 +24,10 @@
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['error_createseries'] = 'There was a problem creating the series in u:stream! ';
+$string['error_noseriespermissions'] = 'There was a problem creating the series in u:stream! ';
+$string['error_reachustream'] = 'There was a problem to reach u:stream: ';
+$string['error_no_series_found'] = 'No such series exists: ';
 $string['link_ustream'] = 'Link u:stream series';
 $string['link_stream_form_create'] = 'Create new series';
 $string['link_stream_form_create_lv'] = 'Create new course specific series';
@@ -34,9 +38,11 @@ $string['link_stream_form_seriesname'] = 'Name of the series in u:stream';
 $string['link_stream_form_link_all_course_series'] = 'Link all course series';
 $string['link_stream_form_series_id_select'] = 'Series to import';
 $string['link_stream_form_series_id'] = 'Series ID';
+$string['link_stream_form_seriesalreadyconnected'] = 'The selected series is already connected to this course!';
 $string['link_stream_form_seriesnotexistsorconnected'] = 'This Series does not exist anymore or is already connected.';
 $string['link_stream_settingsmenu'] = 'Link new u:stream to this course';
 $string['navigationname'] = 'u:stream';
+$string['no_series'] = 'There is no series available!';
 $string['pluginname'] = 'u:stream series connector';
 $string['series_editable'] = 'WARNING! All series connected here are editable by ALL course instructors of this course. Only link your u:stream series if you are OK with that. We are working on a more appropriate solution. Thank you for your patience.';
 $string['series_creation_success'] = 'Series created successfully';
