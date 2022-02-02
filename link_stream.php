@@ -65,25 +65,28 @@ $PAGE->set_title(get_string('link_ustream', 'local_ustreamseries'));
 $PAGE->set_heading($course->fullname);
 
 $mform = new \local_ustreamseries\form\link_stream_form();
+
+if($mform->is_cancelled()) {
+    $redirecturl = new moodle_url('/blocks/opencast/index.php', array('courseid' => $id));
+    redirect($redirecturl);
+}
+
 $formdata = $mform->get_data();
 if ($formdata) {
-    if($mform->is_cancelled()) {
-        //TODO send user to course page;
-    }
     if($formdata->action == LOCAL_USTREAMSERIES_CREATE) {
         $result = local_ustreamseries_create_series($id, false, $formdata->seriesname);
         if($result) {
-            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
-        } else {
             \core\notification::info(get_string('series_creation_success', 'local_ustreamseries'));
+        } else {
+            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
         }
     }
     else if($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
         $result = local_ustreamseries_create_series($id, true, $formdata->seriesname);
         if($result) {
-            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
-        } else {
             \core\notification::info(get_string('series_creation_success', 'local_ustreamseries'));
+        } else {
+            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
         }
     } else if($formdata->action == LOCAL_USTREAMSERIES_LINK) {
         $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
