@@ -88,16 +88,16 @@ if ($formdata) {
     } else if($formdata->action == LOCAL_USTREAMSERIES_LINK) {
         $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
         if($result) {
-            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));
-        } else {
             \core\notification::info(get_string('series_link_success', 'local_ustreamseries'));
+        } else {
+            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));            
         }
     } else if($action == LOCAL_USTREAMSERIES_LINK_OTHER) {
         $result = local_ustreamseries_connect($id, $formdata->seriesid);
         if($result) {
-            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));
-        } else {
             \core\notification::info(get_string('series_link_success', 'local_ustreamseries'));
+        } else {
+            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));
         }
     }
 }
