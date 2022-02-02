@@ -58,9 +58,11 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
 
     $apibridge = apibridge::get_instance(); // Get default instance.
 
-    local_ustreamseries_check_user_edit_permission($ocseriesid, $USER->id);
-
-    $result = $apibridge->import_series_to_course_with_acl_change($courseid, $ocseriesid, $USER->id);
+    if (local_ustreamseries_check_user_edit_permission($ocseriesid, $USER->id)) {
+        $result = $apibridge->import_series_to_course_with_acl_change($courseid, $ocseriesid, $USER->id);
+    } else {
+        throw new \exception(get_string('error_noseriespermissions', 'local_ustreamseries'));
+    }
 
     if ($result->error == 1) {
         // return false;
@@ -80,7 +82,7 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
 function local_ustreamseries_get_all_unconnected_course_series($courseid) {
     //der einzige Kurs, für den die Abfrage funktioniert ist moodletest:117733 <-> cbf059ac-3a67-46f0-9e22-9e7ad43d9faa <-> SS2021-850002-1
 
-    //$courseid = 117733; // Debuggin hack for local instance.
+    //$courseid = 261003; // Debuggin hack for local instance.
 
     $api = api::get_instance();
 
@@ -96,8 +98,12 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
         $connectedSeries = local_ustreamseries_get_connected_course_series($courseid);
         $result = array ();
         foreach ($series as $singleseries) {
-            if (!array_key_exists($singleseries->seriesId, $connectedSeries)) {
-                    $result[$singleseries->seriesId] = $singleseries->title;
+            if ($connectedSeries) {
+                if (!array_key_exists($singleseries->seriesId, $connectedSeries)) {
+                        $result[$singleseries->seriesId] = $singleseries->title;
+                }
+            } else {
+                $result[$singleseries->seriesId] = $singleseries->title;
             }
         }
         if ($result) {
@@ -200,7 +206,7 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
     if ($api->get_http_code() == 200) {
         $seriesacls = json_decode($response);
     } else {
-        throw new \exception(get_string('error_reachustream', 'local_ustreamseries'));
+        throw new \exception(get_string('error_reachustream', 'local_ustreamseries').$response);
     }
     
     $userisallowed = false;

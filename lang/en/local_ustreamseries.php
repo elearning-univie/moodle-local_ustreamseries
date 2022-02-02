@@ -24,8 +24,9 @@
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['error_createseries'] = 'There was a problem creating the series in u:stream!';
-$string['error_reachustream'] = 'There was a problem to reach u:stream!';
+$string['error_createseries'] = 'There was a problem creating the series in u:stream! ';
+$string['error_noseriespermissions'] = 'There was a problem creating the series in u:stream! ';
+$string['error_reachustream'] = 'There was a problem to reach u:stream! ';
 $string['link_ustream'] = 'Link u:stream series';
 $string['link_stream_form_create'] = 'Create new series';
 $string['link_stream_form_create_lv'] = 'Create new course specific series';
