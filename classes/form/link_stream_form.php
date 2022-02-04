@@ -56,7 +56,9 @@ class link_stream_form extends \moodleform {
             $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
         }
 
-        $options['LINE'] = '_____________________________';
+        if (local_ustreamseries_is_lv($courseid)) {
+            $options['LINE'] = '_____________________________';
+        }
 
         if(has_capability('local/ustreamseries:link_other', $context)) {
             $options[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
@@ -69,7 +71,13 @@ class link_stream_form extends \moodleform {
         $mform->setType('id', PARAM_INT);
         $mform->addElement('select', 'action', get_string('link_stream_form_select_action', 'local_ustreamseries'), $options);
         $mform->setType('action', PARAM_ACTION);
-        $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK);
+
+        if (local_ustreamseries_is_lv($courseid)) {
+            $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK);
+        } else {
+            $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK_OTHER);
+        }
+
         $mform->addHelpButton('action', 'link_stream_form_select_action', 'local_ustreamseries');
 
         $mform->addElement('text', 'seriesname', get_string('link_stream_form_seriesname', 'local_ustreamseries' ), 'size="20"');
