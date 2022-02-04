@@ -82,7 +82,7 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
 function local_ustreamseries_get_all_unconnected_course_series($courseid) {
     //der einzige Kurs, für den die Abfrage funktioniert ist moodletest:117733 <-> cbf059ac-3a67-46f0-9e22-9e7ad43d9faa <-> SS2021-850002-1
 
-    //$courseid = 261003; // Debuggin hack for local instance.
+    // $courseid = 261003; // Debuggin hack for local instance.
 
     $api = api::get_instance();
 
@@ -110,7 +110,7 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
             return $result;
         }
     } 
-    return ['emptyseries' => get_string('no_series', 'local_ustreamseries')];
+    return null;
 }
 
 /**

@@ -99,8 +99,12 @@ function local_ustreamseries_extend_navigation($navigation) {
         
         $url = new moodle_url('/local/ustreamseries/index.php', array('id' => $coursecontext->instanceid));
         $title = get_string('navigationname', 'local_ustreamseries');
-        $pix = null;//TODO
-        $childnode = navigation_node::create($title, $url, navigation_node::TYPE_CUSTOM, 'ustreamseries', 'ustreamseries', $pix);
+        $childnode = navigation_node::create($title, 
+            $url, 
+            navigation_node::TYPE_CUSTOM, 
+            'ustreamseries', 
+            'ustreamseries', 
+            new pix_icon('play', 'open u:stream', 'block_opencast'));
         
         if (($mycoursesnode !== false && $mycoursesnode->has_children())) {
             $currentcourseinmycourses = $mycoursesnode->find($coursecontext->instanceid, navigation_node::TYPE_COURSE);
@@ -127,7 +131,12 @@ function local_ustreamseries_extend_navigation_course($coursenode, $course, $cou
         if(has_any_capability(['local/ustreamseries:create', 'local/ustreamseries:create_lv', 'local/ustreamseries:link', 'local/ustreamseries:link_other' ], $coursecontext)) {
             $link = new moodle_url('/local/ustreamseries/link_stream.php',['id' => $course->id]);
             //TODO LOGO
-            $coursenode->add(get_string('link_stream_settingsmenu', 'local_ustreamseries'), $link, navigation_node::TYPE_SETTING, null, 'ustreamseries', new pix_icon('i/user', ''));
+            $coursenode->add(get_string('link_stream_settingsmenu', 
+                'local_ustreamseries'), 
+                $link, navigation_node::TYPE_SETTING, 
+                null, 
+                'ustreamseries', 
+                new pix_icon('play', 'open u:stream', 'block_opencast'));
         }
     }
 

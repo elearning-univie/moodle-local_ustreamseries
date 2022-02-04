@@ -49,17 +49,20 @@ class link_stream_form extends \moodleform {
         $courseid = $COURSE->id;
         $context = \context_course::instance($courseid);
         $options = [];
-        if(\has_capability('local/ustreamseries:create', $context)) {
-            $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
+        if(has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
+            $options[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
         }
         if(\has_capability('local/ustreamseries:create', $context) && local_ustreamseries_is_lv($courseid)) {
             $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
         }
-        if(has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
-            $options[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
-        }
+
+        $options['LINE'] = '_____________________________';
+
         if(has_capability('local/ustreamseries:link_other', $context)) {
             $options[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
+        }
+        if(\has_capability('local/ustreamseries:create', $context)) {
+            $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
         }
 
         $mform->addElement('hidden', 'id', $courseid);
@@ -67,33 +70,47 @@ class link_stream_form extends \moodleform {
         $mform->addElement('select', 'action', get_string('link_stream_form_select_action', 'local_ustreamseries'), $options);
         $mform->setType('action', PARAM_ACTION);
         $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK);
+        $mform->addHelpButton('action', 'link_stream_form_select_action', 'local_ustreamseries');
 
         $mform->addElement('text', 'seriesname', get_string('link_stream_form_seriesname', 'local_ustreamseries' ), 'size="20"');
         $mform->setType('seriesname', PARAM_TEXT);
         $mform->hideif('seriesname', 'action', 'eq', LOCAL_USTREAMSERIES_LINK);
         $mform->hideif('seriesname', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
 
-        $mform->addElement('checkbox', 'linkallcourseseries', get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
-        $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-        $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-        $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-        
-        $mform->setType('linkallcourseseries', PARAM_BOOL);
-        $options = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
-        $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $options);
-        $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
-        $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
-        $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-        $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-        $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
+        $unconnseries = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
+
+        if ($unconnseries) {
+            $mform->addElement('checkbox', 'linkallcourseseries', get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
+            $mform->setType('linkallcourseseries', PARAM_BOOL);
+            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
+            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
+            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
+    
+            $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $unconnseries);
+            $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
+            $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
+            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
+            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
+            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
+        } else {
+            $mform->addElement('select', 'noseries', get_string('link_stream_form_no_course_series_to_connect', 'local_ustreamseries'), array('noseries' => 'There is no series to connect'));
+            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
+            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
+            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
+            $mform->addHelpButton('noseries', 'link_stream_form_no_course_series_to_connect', 'local_ustreamseries');
+        }
 
         $mform->addElement('text', 'seriesid', get_string('link_stream_form_series_id', 'local_ustreamseries'));
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_LINK);
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
         $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-
         $mform->setType('seriesid', PARAM_ALPHANUMEXT);
+        $mform->addHelpButton('seriesid', 'link_stream_form_series_id', 'local_ustreamseries');
+
         $this->add_action_buttons(true, get_string('runbutton', 'local_ustreamseries'));
+
+        $blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $COURSE->id));
+        $mform->addElement('static', 'linktoblock', '', get_string('link_stream_form_link_to_block', 'local_ustreamseries', $blockurl->__toString()));
     }
     
     
