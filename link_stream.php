@@ -75,32 +75,33 @@ $formdata = $mform->get_data();
 if ($formdata) {
     if($formdata->action == LOCAL_USTREAMSERIES_CREATE) {
         $result = local_ustreamseries_create_series($id, false, $formdata->seriesname);
-        if($result) {
-            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries'));
-        } else {
-            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
+        if($result->error == 0) {
+            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
         }
-    }
-    else if($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
+    } else if($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
         $result = local_ustreamseries_create_series($id, true, $formdata->seriesname);
-        if($result) {
-            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries'));
-        } else {
-            \core\notification::error(get_string('series_creation_failed', 'local_ustreamseries'));
+        if($result->error == 0) {
+            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
         }
     } else if($formdata->action == LOCAL_USTREAMSERIES_LINK) {
-        $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
-        if($result) {
-            \core\notification::info(get_string('series_link_success', 'local_ustreamseries'));
+        if ($formdata->linkallcourseseries) {
+            foreach(local_ustreamseries_get_all_unconnected_course_series($COURSE->id) as $courseserieskey => $courseseriesvalue) {
+                $result = null;
+                $result = local_ustreamseries_connect($id, $courseserieskey);
+                if($result) {
+                    \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
+                }
+            }
         } else {
-            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));            
+            $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
+            if($result) {
+                \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
+            }
         }
     } else if($action == LOCAL_USTREAMSERIES_LINK_OTHER) {
         $result = local_ustreamseries_connect($id, $formdata->seriesid);
         if($result) {
-            \core\notification::info(get_string('series_link_success', 'local_ustreamseries'));
-        } else {
-            \core\notification::error(get_string('series_link_failed', 'local_ustreamseries'));
+            \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
         }
     }
 }

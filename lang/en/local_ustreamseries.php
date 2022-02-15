@@ -24,10 +24,13 @@
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['error_createseries'] = 'There was a problem creating the series in u:stream! ';
-$string['error_noseriespermissions'] = 'There was a problem creating the series in u:stream! ';
-$string['error_reachustream'] = 'There was a problem to reach u:stream: ';
-$string['error_no_series_found'] = 'No such series exists: ';
+$string['error_connectseries'] = 'There was an error to connect the series with ID {$a}.';
+$string['error_coursenotfound'] = 'There was an error retrieving possible u:stream-Series to connect to the course with the ID {$a}.';
+$string['error_createseries'] = 'There was a problem creating the series in u:stream!';
+$string['error_noseriespermissions'] = 'User {$a->username} does not have edit-permissions on u:stream-series {$a->seriesid}! ';
+$string['error_noseriesid'] = 'The given ID does not seem to be a valid u:stream series-ID.';
+$string['error_reachustream'] = 'There was a problem to reach the u:stream-server!';
+$string['error_no_series_found'] = 'No series with ID {$a} found!';
 $string['link_ustream'] = 'Link u:stream series';
 $string['link_stream_form_create'] = 'Create new series';
 $string['link_stream_form_create_lv'] = 'Create new course specific series';
@@ -51,10 +54,10 @@ $string['no_series'] = 'There is no series available!';
 $string['pluginname'] = 'u:stream series connector';
 $string['runbutton'] = 'Run';
 $string['series_editable'] = 'WARNING! All series connected here are editable by ALL course instructors of this course. Only link your u:stream series if you are OK with that. We are working on a more appropriate solution. Thank you for your patience.';
-$string['series_creation_success'] = 'Series created successfully';
+$string['series_creation_success'] = 'Series "{$a}" created successfully';
 $string['series_creation_failed'] = 'Error while creating series';
 $string['series_link_failed'] = 'Error while linking series';
-$string['series_link_success'] = 'Series linked to this course successfully';
+$string['series_link_success'] = 'Series "{$a}" linked to this course successfully';
 $string['ustream'] = 'u:stream';
 $string['ustreamseries:create'] = 'Create new ustream-series';
 $string['ustreamseries:link'] = 'Link course series';

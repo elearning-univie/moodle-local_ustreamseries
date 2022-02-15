@@ -51,24 +51,32 @@ define('LOCAL_USTREAMSERIES_LINK_OTHER','linkother');
  * @param int $courseid Moodle Kurs ID
  * @param string $ocseriesid Opencast Serien-ID
  * @throws \exception
- * @return true if succesful
+ * @return object if succesfull or null if it failed
  */
 function local_ustreamseries_connect($courseid, $ocseriesid) {
     global $USER;
 
     $apibridge = apibridge::get_instance(); // Get default instance.
 
+    $result = null;
+
     if (local_ustreamseries_check_user_edit_permission($ocseriesid, $USER->id)) {
         $result = $apibridge->import_series_to_course_with_acl_change($courseid, $ocseriesid, $USER->id);
     } else {
-        throw new \exception(get_string('error_noseriespermissions', 'local_ustreamseries'));
+        return null;
     }
 
-    if ($result->error == 1) {
-        // return false;
-        throw new \exception(get_string('error_createseries', 'local_ustreamseries'));
+    if ($result && $ocseriesid == $result->seriesid) {
+        if ($result->error == 1) {
+            \core\notification::error(get_string('error_connectseries', 'local_ustreamseries', $ocseriesid));
+            return null;
+        } else {
+            $result->seriestitle = $apibridge->get_series_by_identifier($ocseriesid)->title;
+            return $result;
+        }
     } else {
-        return true;
+        \core\notification::error(get_string('error_connectseries', 'local_ustreamseries', $ocseriesid));
+        return null;
     }
 }
 
@@ -76,13 +84,10 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
  * Get an array of series connected to this moodle course in i3v, but still not connected with the course.
  * 
  * @param int $courseid Moodle Kurs ID
- * @throws \exception
- * @return array Return an array with seriesid -> seriestitle mappings or ['emptyseries' => 'Leere Serie']
+ * @return array|null Return an array with seriesid -> seriestitle mappings or ['emptyseries' => 'Leere Serie'] or null
  */
 function local_ustreamseries_get_all_unconnected_course_series($courseid) {
-    //der einzige Kurs, für den die Abfrage funktioniert ist moodletest:117733 <-> cbf059ac-3a67-46f0-9e22-9e7ad43d9faa <-> SS2021-850002-1
-
-    // $courseid = 261003; // Debuggin hack for local instance.
+    // $courseid = 117733; // Debuggin hack for local instance.
 
     $api = api::get_instance();
 
@@ -90,8 +95,10 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
 
     if ($api->get_http_code() == 200) {
         $series = json_decode($response);
+    } else if ($api->get_http_code() == 500) {
+        \core\notification::error(get_string('error_coursenotfound', 'local_ustreamseries', $courseid));
     } else {
-        throw new \exception(get_string('error_reachustream', 'local_ustreamseries'));
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries'));
     }
 
     if ($series) {
@@ -139,36 +146,71 @@ function local_ustreamseries_get_connected_course_series($courseid) {
     }
 }
 
+/**
+ * Create a new series in Opencast setting the right user ACLs
+ * 
+ * @param int $courseid Moodle Kurs ID
+ * @param bool $courseseries If the series is connected with a Lehrveranstaltung in i3v
+ * @param string $name a name for the series
+ * @return object|false $result information about the new series or false if failed
+ */
 function local_ustreamseries_create_series($courseid, $courseseries = false, $name = null) {
     global $USER;
 
-    $api = apibridge::get_instance();
+    $apibridge = apibridge::get_instance();
     
-    $metadatafields = null;
+    $params = [];
     if ($name) {
-        $metadatafields = [];
-        $metadatafields[] = array('id' => 'title', 'value' => $name);
+        $params['title'] = $name;
+    } else {
+        $params['title'] = $apibridge->get_default_seriestitle($courseid, $USER->id);
     }
+
+    //Contributors. Vielleicht noch weitere?
+    $params['contributor'] = $USER->firstname.' '.$USER->lastname;
+
+    $api = api::get_instance();
+
+    $newseries = str_replace('"', '', $api->oc_post('/v0/series', $params));
+
+    $result = $apibridge->import_series_to_course_with_acl_change($courseid, $newseries, $USER->id);
 
     if ($courseseries) {
-        return false; // TODO: implement.
-    } else {
-        $result = $api->create_course_series($courseid, $metadatafields, $USER->id);
+        return $result; // TODO: enrol.
     }
 
-    if ($result) {
+    if ($result->error == 1) {
+        \core\notification::error(get_string('error_createseries', 'local_ustreamseries'));
         return $result;
     } else {
-        return false;
+        $result->seriestitle = $apibridge->get_series_by_identifier($newseries)->title;
+        return $result;
     }
+
 }
 
+/**
+ * Check, if a series exists in opencast
+ * 
+ * @param string $seriesid opencast series ID
+ * @return bool $result whether the series exists
+ */
 function local_ustreamseries_check_series_exists($seriesid) {
     $api = apibridge::get_instance();
-    $series = $api->get_series_by_identifier($seriesid); //TODO: catch
+    try {
+        $series = $api->get_series_by_identifier($seriesid);
+    } catch(\moodle_exception $e) {
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries'));
+    }
     return (bool) $series;
 }
 
+/**
+ * Check, if a course is a univie-Lehrveranstaltung based on it's shortname structure
+ * 
+ * @param int $courseid opencast series ID
+ * @return bool $result whether the series exists
+ */
 function local_ustreamseries_is_lv($courseid) {
     global $DB;
     $shortname = $DB->get_field('course', 'shortname', ['id' => $courseid]);
@@ -191,7 +233,6 @@ function local_ustreamseries_is_lv($courseid) {
  * Checks Opencast writing permission for the u:account connected to the given moodle-user.
  * @param string $ocseriesid Opncast seriesid to check permissions for
  * @param int $userid moodle user-ID to check permissions for. Should be the u:account
- * @throws \exception
  * @return bool $result true/false
  */
 function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = null) {
@@ -201,6 +242,13 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
         $userid = $USER->id;
     }
     
+    // $ocseriesid = );
+
+    if (!ctype_xdigit(str_replace(' ', '', str_replace('-', '', $ocseriesid)))) {
+        \core\notification::error(get_string('error_noseriesid', 'local_ustreamseries'));
+        return false;
+    }
+
     $api = api::get_instance();
 
     $response = $api->oc_get('/api/series/' . $ocseriesid . '/acl');
@@ -208,9 +256,11 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
     if ($api->get_http_code() == 200) {
         $seriesacls = json_decode($response);
     } else if ($api->get_http_code() == 404) {
-        throw new \exception(get_string('error_no_series_found', 'local_ustreamseries: '.$ocseriesid));
+        \core\notification::error(get_string('error_no_series_found', 'local_ustreamseries', $ocseriesid));
+        return false;
     } else {
-        throw new \exception(get_string('error_reachustream', 'local_ustreamseries').$response);
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
+        return false;
     }
     
     $userisallowed = false;
@@ -222,7 +272,15 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
         }
     }
 
-    return $userisallowed;
+    if ($userisallowed == false) {
+        $a = [];
+        $a['username'] = $USER->username;
+        $a['seriesid'] = $ocseriesid;
+        \core\notification::error(get_string('error_noseriespermissions', 'local_ustreamseries', $a));
+        return false;
+    }
+
+    return true;
 }
 
  /**
