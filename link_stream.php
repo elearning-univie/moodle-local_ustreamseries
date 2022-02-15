@@ -104,7 +104,34 @@ if ($formdata) {
         }
     }
 }
-\core\notification::warning(get_string('series_editable', 'local_ustreamseries'));
+
+
+$series = $DB->get_records('tool_opencast_series', array('courseid' => $id));
+// Transform isdefault to int.
+array_walk($series, function ($item) {
+    $item->isdefault = intval($item->isdefault);
+});
+
+
+
+if($series) {
+    $ocinstanceid = 1;
+    $templatecontext = new stdClass();
+    $templatecontext->series = json_encode(array_values($series));
+    $templatecontext->addseriesallowed = count($series) < get_config('block_opencast', 'maxseries_' . $ocinstanceid);
+    $templatecontext->numseriesallowed = get_config('block_opencast', 'maxseries_' . $ocinstanceid);
+    $PAGE->requires->js_call_amd('block_opencast/block_manage_series', 'init', [$coursecontext->id, $ocinstanceid]);
+    $PAGE->requires->css('/blocks/opencast/css/tabulator.min.css');
+    $PAGE->requires->css('/blocks/opencast/css/tabulator_bootstrap4.min.css');
+}
 echo $OUTPUT->header();
+if($series) {
+    echo $OUTPUT->heading(get_string('editexistingseries', 'local_ustreamseries'));
+    echo $OUTPUT->render_from_template('local_ustreamseries/series_table', $templatecontext);
+}
+
+echo $OUTPUT->heading(get_string('addnewseries', 'local_ustreamseries'));
+$notificationtype = \core\output\notification::NOTIFY_WARNING;
+echo $OUTPUT->notification(get_string('series_editable', 'local_ustreamseries'), $notificationtype);
 $mform->display();
 echo $OUTPUT->footer();

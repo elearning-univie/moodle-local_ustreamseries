@@ -23,7 +23,8 @@
  * @since         Moodle 3.11
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
+$string['addnewseries'] = 'Neue Serie hinzufügen';
+$string['editexistingseries'] = 'Serien bearbeiten';
 $string['link_ustream'] = 'Verknüpfe u:stream Serien';
 $string['link_stream_form_create'] = 'Neue Serie erstellen';
 $string['link_stream_form_create_lv'] = 'Neue LV-Serie erstellen';

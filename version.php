@@ -22,7 +22,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022020400;
+$plugin->version = 20220221500;
 $plugin->requires = 2020110900;
 $plugin->component = 'local_ustreamseries';
 $plugin->maturity = MATURITY_STABLE;

@@ -57,7 +57,6 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
     global $USER;
 
     $apibridge = apibridge::get_instance(); // Get default instance.
-
     if (local_ustreamseries_check_user_edit_permission($ocseriesid, $USER->id)) {
         $result = $apibridge->import_series_to_course_with_acl_change($courseid, $ocseriesid, $USER->id);
     } else {

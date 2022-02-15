@@ -23,7 +23,8 @@
  * @since         Moodle 3.11
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
+$string['addnewseries'] = 'Add new series';
+$string['editexistingseries'] = 'Edit existing series';
 $string['error_createseries'] = 'There was a problem creating the series in u:stream! ';
 $string['error_noseriespermissions'] = 'There was a problem creating the series in u:stream! ';
 $string['error_reachustream'] = 'There was a problem to reach u:stream: ';
