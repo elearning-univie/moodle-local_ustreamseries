@@ -52,18 +52,18 @@ class link_stream_form extends \moodleform {
         if(has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
             $options[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
         }
-        if(\has_capability('local/ustreamseries:create', $context) && local_ustreamseries_is_lv($courseid)) {
+        if(has_capability('local/ustreamseries:create', $context) && local_ustreamseries_is_lv($courseid)) {
             $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
         }
 
-        if (local_ustreamseries_is_lv($courseid)) {
+        if ((has_capability('local/ustreamseries:link', $context) || has_capability('local/ustreamseries:create', $context)) && local_ustreamseries_is_lv($courseid)) {
             $options['LINE'] = '_____________________________';
         }
 
         if(has_capability('local/ustreamseries:link_other', $context)) {
             $options[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
         }
-        if(\has_capability('local/ustreamseries:create', $context)) {
+        if(has_capability('local/ustreamseries:create', $context)) {
             $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
         }
 
@@ -88,12 +88,14 @@ class link_stream_form extends \moodleform {
         $unconnseries = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
 
         if ($unconnseries) {
-            $mform->addElement('checkbox', 'linkallcourseseries', get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
-            $mform->setType('linkallcourseseries', PARAM_BOOL);
-            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-            $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-    
+            if (sizeof($unconnseries) > 1) {
+                $mform->addElement('checkbox', 'linkallcourseseries', get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
+                $mform->setType('linkallcourseseries', PARAM_BOOL);
+                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
+                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
+                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
+            }
+            
             $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $unconnseries);
             $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
             $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
@@ -144,8 +146,10 @@ class link_stream_form extends \moodleform {
             case LOCAL_USTREAMSERIES_LINK:
                 require_capability('local/ustreamseries:link', $context);
                 $unconnected = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
-                if(!$unconnected[$data['seriesidselect']]) {
-                    $errors['seriesidselect'] = get_string('seriesnotexistsorconnected', 'local_ustreamseries');
+                if ($data['seriesidselect']) {
+                    if(!$unconnected[$data['seriesidselect']]) {
+                        $errors['seriesidselect'] = get_string('seriesnotexistsorconnected', 'local_ustreamseries');
+                    }
                 }
                 break;
             case LOCAL_USTREAMSERIES_LINK_OTHER:
