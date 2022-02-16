@@ -98,7 +98,7 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
     } else if ($api->get_http_code() == 500) {
         \core\notification::error(get_string('error_coursenotfound', 'local_ustreamseries', $courseid));
     } else {
-        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries'));
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
     }
 
     if ($series) {
@@ -200,7 +200,7 @@ function local_ustreamseries_check_series_exists($seriesid) {
     try {
         $series = $api->get_series_by_identifier($seriesid);
     } catch(\moodle_exception $e) {
-        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries'));
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$e->getMessage());
     }
     return (bool) $series;
 }
