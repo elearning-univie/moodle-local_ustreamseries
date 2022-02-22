@@ -39,31 +39,36 @@ require_once($CFG->dirroot.'/local/ustreamseries/locallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class link_stream_form extends \moodleform {
-    
+
     /**
      * Form definition method.
      */
     public function definition() {
-        global $PAGE, $USER, $COURSE;
+        global $COURSE;
         $mform = $this->_form;
         $courseid = $COURSE->id;
         $context = \context_course::instance($courseid);
         $options = [];
-        if(has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
+        if (has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
             $options[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
         }
-        if(has_capability('local/ustreamseries:create', $context) && local_ustreamseries_is_lv($courseid)) {
+
+        if (has_capability('local/ustreamseries:create_lv', $context) && local_ustreamseries_is_lv($courseid)) {
+
             $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
         }
 
-        if ((has_capability('local/ustreamseries:link', $context) || has_capability('local/ustreamseries:create', $context)) && local_ustreamseries_is_lv($courseid)) {
+        if (has_any_capability(['local/ustreamseries:link_other', 'local/ustreamseries:create'], $context)
+            && has_any_capability(['local/ustreamseries:link', 'local/ustreamseries:create_lv'], $context)
+            && local_ustreamseries_is_lv($courseid)) {
             $options['LINE'] = '_____________________________';
         }
 
-        if(has_capability('local/ustreamseries:link_other', $context)) {
+        if (has_capability('local/ustreamseries:link_other', $context)) {
             $options[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
         }
-        if(has_capability('local/ustreamseries:create', $context)) {
+
+        if (has_capability('local/ustreamseries:create', $context)) {
             $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
         }
 
@@ -88,22 +93,25 @@ class link_stream_form extends \moodleform {
         $unconnseries = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
 
         if ($unconnseries) {
-            if (sizeof($unconnseries) > 1) {
-                $mform->addElement('checkbox', 'linkallcourseseries', get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
+            if (count($unconnseries) > 1) {
+                $mform->addElement('checkbox', 'linkallcourseseries',
+                    get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
                 $mform->setType('linkallcourseseries', PARAM_BOOL);
                 $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
                 $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
                 $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
             }
-            
-            $mform->addElement('select', 'seriesidselect', get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $unconnseries);
+            $mform->addElement('select', 'seriesidselect',
+                get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $unconnseries);
             $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
             $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
             $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
             $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
             $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
         } else {
-            $mform->addElement('select', 'noseries', get_string('link_stream_form_no_course_series_to_connect', 'local_ustreamseries'), array('noseries' => 'There is no series to connect'));
+            $mform->addElement('select', 'noseries',
+                get_string('link_stream_form_no_course_series_to_connect', 'local_ustreamseries'),
+                array('noseries' => 'There is no series to connect'));
             $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
             $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
             $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
@@ -120,19 +128,19 @@ class link_stream_form extends \moodleform {
         $this->add_action_buttons(true, get_string('runbutton', 'local_ustreamseries'));
 
         $blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $COURSE->id));
-        $mform->addElement('static', 'linktoblock', '', get_string('link_stream_form_link_to_block', 'local_ustreamseries', $blockurl->__toString()));
+        $mform->addElement('static', 'linktoblock', '',
+            get_string('link_stream_form_link_to_block', 'local_ustreamseries', $blockurl->__toString()));
     }
-    
-    
+
     /**
      * Check if everything is correct and check also the user rights for the action;
-     * 
+     *
      * @param array $data array of ("fieldname"=>value) of submitted data
      * @param array $files array of uploaded files "element_name"=>tmp_file_path
      * @return array of "element_name"=>"error_description" if there are errors,
      *         or an empty array if everything is OK (true allowed for backwards compatibility too).
      */
-    function validation($data, $files) {
+    public function validation($data, $files) {
         global $COURSE;
         $errors = [];
         $context = \context_course::instance($COURSE->id);
@@ -146,10 +154,12 @@ class link_stream_form extends \moodleform {
             case LOCAL_USTREAMSERIES_LINK:
                 require_capability('local/ustreamseries:link', $context);
                 $unconnected = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
+
                 if ($data['seriesidselect']) {
-                    if(!$unconnected[$data['seriesidselect']]) {
+                    if (!$unconnected[$data['seriesidselect']]) {
                         $errors['seriesidselect'] = get_string('seriesnotexistsorconnected', 'local_ustreamseries');
                     }
+
                 }
                 break;
             case LOCAL_USTREAMSERIES_LINK_OTHER:

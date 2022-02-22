@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Connect new ustream series with 
+ * Connect new ustream series with
  *
  * @package    local_ustreamseries
  * @copyright  2022 University of Vienna
@@ -39,8 +39,7 @@
 /**
  * This script lists all the instances of offlinequiz in a particular course
  *
- * @package       local
- * @subpackage    ustreamseries
+ * @package       local_ustreamseries
  * @author        Thomas Wedekind
  * @copyright     2022 University of Vienna
  * @since         Moodle 3.11
@@ -66,41 +65,43 @@ $PAGE->set_heading($course->fullname);
 
 $mform = new \local_ustreamseries\form\link_stream_form();
 
-if($mform->is_cancelled()) {
+if ($mform->is_cancelled()) {
     $redirecturl = new moodle_url('/course/view.php', array('id' => $id));
     redirect($redirecturl);
 }
 
 $formdata = $mform->get_data();
 if ($formdata) {
-    if($formdata->action == LOCAL_USTREAMSERIES_CREATE) {
+    if ($formdata->action == LOCAL_USTREAMSERIES_CREATE) {
         $result = local_ustreamseries_create_series($id, false, $formdata->seriesname);
-        if($result->error == 0) {
+
+        if ($result->error == 0) {
             \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
         }
-    } else if($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
+    } else if ($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
         $result = local_ustreamseries_create_series($id, true, $formdata->seriesname);
-        if($result->error == 0) {
+        if ($result->error == 0) {
             \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
         }
-    } else if($formdata->action == LOCAL_USTREAMSERIES_LINK) {
+    } else if ($formdata->action == LOCAL_USTREAMSERIES_LINK) {
         if ($formdata->linkallcourseseries) {
-            foreach(local_ustreamseries_get_all_unconnected_course_series($COURSE->id) as $courseserieskey => $courseseriesvalue) {
+            foreach (local_ustreamseries_get_all_unconnected_course_series($COURSE->id) as $courseserieskey => $courseseriesvalue) {
                 $result = null;
                 $result = local_ustreamseries_connect($id, $courseserieskey);
-                if($result) {
+                if ($result) {
                     \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
                 }
             }
         } else {
             $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
-            if($result) {
+            if ($result) {
                 \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
             }
         }
-    } else if($action == LOCAL_USTREAMSERIES_LINK_OTHER) {
+    } else if ($action == LOCAL_USTREAMSERIES_LINK_OTHER) {
         $result = local_ustreamseries_connect($id, $formdata->seriesid);
-        if($result) {
+
+        if ($result) {
             \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
         }
     }
@@ -115,7 +116,7 @@ array_walk($series, function ($item) {
 
 
 
-if($series) {
+if ($series) {
     $ocinstanceid = 1;
     $templatecontext = new stdClass();
     $templatecontext->series = json_encode(array_values($series));
@@ -126,7 +127,7 @@ if($series) {
     $PAGE->requires->css('/blocks/opencast/css/tabulator_bootstrap4.min.css');
 }
 echo $OUTPUT->header();
-if($series) {
+if ($series) {
     echo $OUTPUT->heading(get_string('editexistingseries', 'local_ustreamseries'));
     echo $OUTPUT->render_from_template('local_ustreamseries/series_table', $templatecontext);
 }
