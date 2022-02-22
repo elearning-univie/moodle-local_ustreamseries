@@ -28,10 +28,10 @@ defined('MOODLE_INTERNAL') || die();
 use block_opencast\local\apibridge;
 use tool_opencast\local\api;
 
-define('LOCAL_USTREAMSERIES_CREATE','create');
-define('LOCAL_USTREAMSERIES_CREATE_LV','createlv');
-define('LOCAL_USTREAMSERIES_LINK','link');
-define('LOCAL_USTREAMSERIES_LINK_OTHER','linkother');
+define('LOCAL_USTREAMSERIES_CREATE', 'create');
+define('LOCAL_USTREAMSERIES_CREATE_LV', 'createlv');
+define('LOCAL_USTREAMSERIES_LINK', 'link');
+define('LOCAL_USTREAMSERIES_LINK_OTHER', 'linkother');
 
 /**
  *
@@ -43,10 +43,10 @@ define('LOCAL_USTREAMSERIES_LINK_OTHER','linkother');
  */
 /**
  * Connect an opencast series with a moodle course.
- * 
+ *
  * Die aufgerufere Funktion import_series_to_course_with_acl_change() tut folgendes:
- * - In Opencast werden der Serie die ACLs hinzugefügt, die in den Adminsettings gelistet sind. 
- * - Dann wird die Serie mit dem Moodlekurs vernüpft. 
+ * - In Opencast werden der Serie die ACLs hinzugefügt, die in den Adminsettings gelistet sind.
+ * - Dann wird die Serie mit dem Moodlekurs vernüpft.
  * - Sie wird als Defaultserie gesetzt, wenn es noch keine Defaultserie gibt.
  * @param int $courseid Moodle Kurs ID
  * @param string $ocseriesid Opencast Serien-ID
@@ -82,12 +82,11 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
 
 /**
  * Get an array of series connected to this moodle course in i3v, but still not connected with the course.
- * 
+ *
  * @param int $courseid Moodle Kurs ID
  * @return array|null Return an array with seriesid -> seriestitle mappings or ['emptyseries' => 'Leere Serie'] or null
  */
 function local_ustreamseries_get_all_unconnected_course_series($courseid) {
-    // $courseid = 117733; // Debuggin hack for local instance.
 
     $api = api::get_instance();
 
@@ -102,11 +101,11 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
     }
 
     if ($series) {
-        $connectedSeries = local_ustreamseries_get_connected_course_series($courseid);
+        $connectedseries = local_ustreamseries_get_connected_course_series($courseid);
         $result = array ();
         foreach ($series as $singleseries) {
-            if ($connectedSeries) {
-                if (!array_key_exists($singleseries->seriesId, $connectedSeries)) {
+            if ($connectedseries) {
+                if (!array_key_exists($singleseries->seriesId, $connectedseries)) {
                         $result[$singleseries->seriesId] = $singleseries->title;
                 }
             } else {
@@ -116,13 +115,13 @@ function local_ustreamseries_get_all_unconnected_course_series($courseid) {
         if ($result) {
             return $result;
         }
-    } 
+    }
     return null;
 }
 
 /**
  * Get all Opencast series, already imported into this course.
- * 
+ *
  * @param int $courseid Moodle Kurs ID
  * @return array $result seriesid -> seriestitle or null
  */
@@ -138,7 +137,7 @@ function local_ustreamseries_get_connected_course_series($courseid) {
             $result[$singleseries->series] = $ocseries->title;
         }
     }
-    
+
     if ($result) {
         return $result;
     } else {
@@ -146,19 +145,19 @@ function local_ustreamseries_get_connected_course_series($courseid) {
     }
 }
 
-/**
- * Create a new series in Opencast setting the right user ACLs
- * 
- * @param int $courseid Moodle Kurs ID
- * @param bool $courseseries If the series is connected with a Lehrveranstaltung in i3v
- * @param string $name a name for the series
- * @return object|false $result information about the new series or false if failed
- */
+
+  /**
+   * Creates a series in u:stream and connects it with moodle
+   * @param int $courseid the id of the course for the series
+   * @param boolean $courseseries if this series is a course series
+   * @param string $name the name of the series
+   * @return bool $result true/false
+   */
 function local_ustreamseries_create_series($courseid, $courseseries = false, $name = null) {
     global $USER;
 
     $apibridge = apibridge::get_instance();
-    
+
     $params = [];
     if ($name) {
         $params['title'] = $name;
@@ -166,7 +165,6 @@ function local_ustreamseries_create_series($courseid, $courseseries = false, $na
         $params['title'] = $apibridge->get_default_seriestitle($courseid, $USER->id);
     }
 
-    //Contributors. Vielleicht noch weitere?
     $params['contributor'] = $USER->firstname.' '.$USER->lastname;
 
     $api = api::get_instance();
@@ -191,7 +189,7 @@ function local_ustreamseries_create_series($courseid, $courseseries = false, $na
 
 /**
  * Check, if a series exists in opencast
- * 
+ *
  * @param string $seriesid opencast series ID
  * @return bool $result whether the series exists
  */
@@ -199,50 +197,46 @@ function local_ustreamseries_check_series_exists($seriesid) {
     $api = apibridge::get_instance();
     try {
         $series = $api->get_series_by_identifier($seriesid);
-    } catch(\moodle_exception $e) {
+    } catch (\moodle_exception $e) {
         \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$e->getMessage());
     }
     return (bool) $series;
 }
 
 /**
- * Check, if a course is a univie-Lehrveranstaltung based on it's shortname structure
- * 
- * @param int $courseid opencast series ID
- * @return bool $result whether the series exists
+ * Check, whether a moodle course is a lv or not
+ * @param int $courseid the courseid
+ *
+ * @return bool $result true/false
  */
 function local_ustreamseries_is_lv($courseid) {
     global $DB;
     $shortname = $DB->get_field('course', 'shortname', ['id' => $courseid]);
-    
-    $islv = false;
-    if (preg_match('/^\d{4}[WS] \d*-\d* .*/', $shortname)) {
-        $islv =true;
-    }
 
-    if (preg_match('/^[WS]S\d{4}-.*/', $shortname)) {
-        $islv =true;
+    $islv = false;
+    if (preg_match('/^\d{4}[WS] \d*-\d* .*/', $shortname) ||
+        preg_match('/^[WS]S\d{4}-.*/', $shortname)) {
+        $islv = true;
     }
 
     return $islv;
 }
 
- /**
- * Check, whether a moodle user has write permission to a series in Opencast.
- * 
- * Checks Opencast writing permission for the u:account connected to the given moodle-user.
- * @param string $ocseriesid Opncast seriesid to check permissions for
- * @param int $userid moodle user-ID to check permissions for. Should be the u:account
- * @return bool $result true/false
- */
+  /**
+   * Check, whether a moodle user has write permission to a series in Opencast.
+   *
+   * Checks Opencast writing permission for the u:account connected to the given moodle-user.
+   * @param string $ocseriesid Opncast seriesid to check permissions for
+   * @param int $userid moodle user-ID to check permissions for. Should be the u:account
+   * @throws \exception
+   * @return bool $result true/false
+   */
 function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = null) {
     global $USER;
 
     if (!$userid) {
         $userid = $USER->id;
     }
-    
-    // $ocseriesid = );
 
     if (!ctype_xdigit(str_replace(' ', '', str_replace('-', '', $ocseriesid)))) {
         \core\notification::error(get_string('error_noseriesid', 'local_ustreamseries'));
@@ -262,7 +256,7 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
         \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
         return false;
     }
-    
+
     $userisallowed = false;
 
     $thisrole = local_ustreamseries_muid_to_ocrole($userid);
@@ -283,12 +277,12 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
     return true;
 }
 
- /**
- * Convert a Moodle User ID to the respecting Opencast personal role of that user' u:account
- * 
- * @param int $userid user ID in moodle
- * @return string $role opencast role for the connected u:account
- */
+  /**
+   * Convert a Moodle User ID to the respecting Opencast personal role of that user' u:account
+   *
+   * @param int $userid user ID in moodle
+   * @return string $role opencast role for the connected u:account
+   */
 function local_ustreamseries_muid_to_ocrole($userid = null) {
     global $USER;
 
