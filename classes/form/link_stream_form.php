@@ -127,9 +127,6 @@ class link_stream_form extends \moodleform {
 
         $this->add_action_buttons(true, get_string('runbutton', 'local_ustreamseries'));
 
-        $blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $COURSE->id));
-        $mform->addElement('static', 'linktoblock', '',
-            get_string('link_stream_form_link_to_block', 'local_ustreamseries', $blockurl->__toString()));
     }
 
     /**

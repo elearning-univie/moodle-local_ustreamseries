@@ -127,6 +127,10 @@ if ($series) {
     $PAGE->requires->css('/blocks/opencast/css/tabulator_bootstrap4.min.css');
 }
 echo $OUTPUT->header();
+$blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $COURSE->id));
+$blockstring = get_string('link_to_block', 'local_ustreamseries');
+echo "<a href=\"$blockurl\" id=\"local_ustream_link_to_block\"
+      class=\"d-flex flex-wrap flex-row-reverse m-b-1 text-right\">$blockstring</a>";
 if ($series) {
     echo $OUTPUT->heading(get_string('editexistingseries', 'local_ustreamseries'));
     echo $OUTPUT->render_from_template('local_ustreamseries/series_table', $templatecontext);

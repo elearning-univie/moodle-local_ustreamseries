@@ -33,6 +33,7 @@ $string['error_noseriesid'] = 'The given ID does not seem to be a valid u:stream
 $string['error_reachustream'] = 'The u:stream-server could not be reached: ';
 $string['error_no_series_found'] = 'No series with ID {$a} found!';
 $string['link_ustream'] = 'Link u:stream series';
+$string['link_to_block'] = 'Go to u:stream video overview page.';
 $string['link_stream_form_create'] = 'Create new series';
 $string['link_stream_form_create_lv'] = 'Create new course specific series';
 $string['link_stream_form_link'] = 'Link course series';
@@ -43,7 +44,6 @@ $string['link_stream_form_select_action'] = 'Choose action';
 $string['link_stream_form_select_action_help'] = 'Help text describing the actions';
 $string['link_stream_form_seriesname'] = 'Name of the series in u:stream';
 $string['link_stream_form_link_all_course_series'] = 'Link all course series';
-$string['link_stream_form_link_to_block'] = '<a href="{$a}">Go to u:stream video overview page.</a>';
 $string['link_stream_form_series_id_select'] = 'Series to import';
 $string['link_stream_form_series_id'] = 'Series ID';
 $string['link_stream_form_series_id_help'] = 'Series ID as presented in the notification e-Mail when creating the series bla bla';
