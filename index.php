@@ -39,11 +39,10 @@
 /**
  * This script lists all the instances of offlinequiz in a particular course
  *
- * @package       mod
- * @subpackage    offlinequiz
- * @author        Juergen Zimmer <zimmerj7@univie.ac.at>
- * @copyright     2015 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
- * @since         Moodle 2.2
+ * @package       local_ustreamseries
+ * @author        Thomas Wedekind
+ * @copyright     2022 University of Vienna
+ * @since         Moodle 3.0
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 require_once("../../config.php");
@@ -55,8 +54,7 @@ $coursecontext = context_course::instance($id);
 require_capability('local/ustreamseries:view', $coursecontext);
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
-if(local_ustreamseries_get_connected_course_series($course->id)) {
-    //TODO
+if (local_ustreamseries_get_connected_course_series($course->id)) {
     $redirecturl = new moodle_url('/blocks/opencast/index.php', array('courseid' => $id));
     redirect($redirecturl);
 }
@@ -66,6 +64,6 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('ustream', 'local_ustreamseries'));
 $PAGE->set_heading($course->fullname);
 echo $OUTPUT->header();
-$warning = get_string('warning_noustream','local_ustreamseries', $CFG->wwwroot . '/local/ustreamseries/link_stream.php?id=' . $id);
+$warning = get_string('warning_noustream', 'local_ustreamseries', $CFG->wwwroot . '/local/ustreamseries/link_stream.php?id=' . $id);
 \core\notification::warning($warning);
 echo $OUTPUT->footer();

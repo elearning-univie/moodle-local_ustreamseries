@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * This is the version.php for local_ustreamseries.
+ *
  * @package   local_ustreamseries
  * @copyright 2021, University of Vienna
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -22,13 +24,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 20220221500;
+$plugin->version = 2022022200;
 $plugin->requires = 2020110900;
 $plugin->component = 'local_ustreamseries';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v0.0.5';
+$plugin->release = 'v0.0.7';
 
 $plugin->dependencies = [
   'block_opencast' => 2021122000,
-  'tool_opencast' => 2021122000
+  'tool_opencast' => 2021122000,
+  'mod_streamlti' => 2021051100
 ];
