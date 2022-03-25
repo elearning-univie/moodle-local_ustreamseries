@@ -64,6 +64,12 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('ustream', 'local_ustreamseries'));
 $PAGE->set_heading($course->fullname);
 echo $OUTPUT->header();
-$warning = get_string('warning_noustream', 'local_ustreamseries', $CFG->wwwroot . '/local/ustreamseries/link_stream.php?id=' . $id);
+echo $OUTPUT->heading(get_string('ustreamvideos', 'local_ustreamseries'));
+
+$warning = get_string('warning_noustream', 'local_ustreamseries');
 \core\notification::warning($warning);
+echo '<p>' . get_string('instructions_noustream', 'local_ustreamseries') . '</p>';
+echo '<a href="' . $CFG->wwwroot . '/local/ustreamseries/link_stream.php?id=' . $id
+. '"><button class="btn btn-primary">' . get_string('button_noustream', 'local_ustreamseries') . '</button></a>';
+
 echo $OUTPUT->footer();

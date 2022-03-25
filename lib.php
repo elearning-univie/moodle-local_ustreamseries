@@ -37,7 +37,7 @@ function local_ustreamseries_extend_navigation($navigation) {
     }
 
     if ('admin-index' === $PAGE->pagetype) {
-        $exists = $DB->record_exists('capabilities', array('name' => 'local/contactlist:view'));
+        $exists = $DB->record_exists('capabilities', array('name' => 'local/ustreamseries:view'));
 
         if (!$exists) {
             return;
@@ -68,8 +68,8 @@ function local_ustreamseries_extend_navigation($navigation) {
             continue;
         }
         $beforekey = null;
-        $participantsnode = $mycoursesnode->find('grades', navigation_node::TYPE_CONTAINER);
-        if ($participantsnode) { // Add the navnode after participants.
+        $participantsnode = $mycoursesnode->find('participants', navigation_node::TYPE_CONTAINER);
+        if ($participantsnode) { // Add the navnode before grades.
             $keys = $participantsnode->parent->get_children_key_list();
             $igrades = array_search('grades', $keys);
             if ($igrades !== false) {
@@ -79,15 +79,11 @@ function local_ustreamseries_extend_navigation($navigation) {
             }
         }
 
-        if ($beforekey == null) { // No participants node found, fall back to other variants!
+        if ($beforekey == null) { // No participants node found, fall back to above sections
             $activitiesnode = $mycoursesnode->find('activitiescategory', navigation_node::TYPE_CATEGORY);
             if ($activitiesnode == false) {
-                $custom = $mycoursesnode->find_all_of_type(navigation_node::TYPE_CUSTOM);
                 $sections = $mycoursesnode->find_all_of_type(navigation_node::TYPE_SECTION);
-                if (!empty($custom)) {
-                    $first = reset($custom);
-                    $beforekey = $first->key;
-                } else if (!empty($sections)) {
+                if (!empty($sections)) {
                     $first = reset($sections);
                     $beforekey = $first->key;
                 }
@@ -116,32 +112,7 @@ function local_ustreamseries_extend_navigation($navigation) {
 
 
 /**
- * This function extends the settings navigation block for the course.
- *
- *
- * @param navigation_node $coursenode the node of the course
- * @param object $course the course of the ustream-series
- * @param object $coursecontext the context of the course
- */
-function local_ustreamseries_extend_navigation_course($coursenode, $course, $coursecontext) {
-    if ($course && $course->id != SITEID) {
-        if (has_any_capability(['local/ustreamseries:create',
-            'local/ustreamseries:create_lv', 'local/ustreamseries:link',
-            'local/ustreamseries:link_other' ], $coursecontext)) {
-            $link = new moodle_url('/local/ustreamseries/link_stream.php', ['id' => $course->id]);
-            $coursenode->add(get_string('link_stream_settingsmenu',
-                'local_ustreamseries'),
-                $link, navigation_node::TYPE_SETTING,
-                null,
-                'ustreamseries',
-                new pix_icon('play', 'open u:stream', 'block_opencast'));
-        }
-    }
-
-}
-
-/**
- * JS for inserting a link to the ustreamseries-dialogue.
+ * JS for inserting a link to the ustreamseries-dialogue and changing the title.
  *
  * @return string|void
  * @throws coding_exception
@@ -152,8 +123,8 @@ function local_ustreamseries_before_standard_top_of_body_html() {
     global $PAGE, $COURSE, $OUTPUT;
     $context = context_course::instance($COURSE->id);
     if (!(strpos($PAGE->url->get_path(), '/blocks/opencast/index.php') !== false) || !has_any_capability(
-        ['local/ustreamseries:create', 'local/ustreamseries:create_lv',
-             'local/ustreamseries:link', 'local/ustreamseries:link_other'],
+        ['local/ustreamseries:create_personal', 'local/ustreamseries:create_lv',
+             'local/ustreamseries:link_lv', 'local/ustreamseries:link_other'],
         $context)) {
         return;
     }
@@ -163,7 +134,9 @@ function local_ustreamseries_before_standard_top_of_body_html() {
     $templatecontext['title'] = get_string('link_stream_settingsmenu_short', 'local_ustreamseries');
     $templatecontext['text'] = get_string('link_stream_settingsmenu', 'local_ustreamseries');
     $rendered = $OUTPUT->render_from_template('local_ustreamseries/series_link', $templatecontext);
-    $PAGE->requires->js_call_amd('local_ustreamseries/settingslink', 'init', [$rendered]);
+
+    $pluginname = get_string('pluginname', 'block_opencast');
+    $PAGE->requires->js_call_amd('local_ustreamseries/blockindexpatches', 'init', [$rendered, $COURSE->fullname, $pluginname]);
 
 }
 
