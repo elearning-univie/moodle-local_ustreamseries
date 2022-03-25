@@ -29,8 +29,10 @@ use block_opencast\local\apibridge;
 use tool_opencast\local\api;
 
 define('LOCAL_USTREAMSERIES_CREATE', 'create');
+define('LOCAL_USTREAMSERIES_CREATE_PERSONAL', 'createpersonal');
 define('LOCAL_USTREAMSERIES_CREATE_LV', 'createlv');
 define('LOCAL_USTREAMSERIES_LINK', 'link');
+define('LOCAL_USTREAMSERIES_LINK_LV', 'linklv');
 define('LOCAL_USTREAMSERIES_LINK_OTHER', 'linkother');
 
 /**
@@ -41,6 +43,115 @@ define('LOCAL_USTREAMSERIES_LINK_OTHER', 'linkother');
  * @since         Moodle 3.11
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+/**
+ * Get an array of series connected to this moodle course in i3v, but still not connected with the course.
+ *
+ * @param int $courseid Moodle Kurs ID
+ * @return array|null Return an array with seriesid -> seriestitle mappings or ['emptyseries' => 'Leere Serie'] or null
+ */
+function local_ustreamseries_get_all_unconnected_course_series($courseid) {
+
+    $api = api::get_instance();
+
+    $response = $api->oc_get('/v1/campus/univie/series/byMoodleCourseId/' . $courseid);
+
+    if ($api->get_http_code() == 200) {
+        $series = json_decode($response);
+    } else if ($api->get_http_code() == 500) {
+        \core\notification::error(get_string('error_coursenotfound', 'local_ustreamseries', $courseid));
+    } else {
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
+    }
+
+    if ($series) {
+        $connectedseries = local_ustreamseries_get_connected_course_series($courseid);
+        $result = array ();
+        foreach ($series as $singleseries) {
+            if ($connectedseries) {
+                if (!array_key_exists($singleseries->seriesId, $connectedseries)) {
+                        $result[$singleseries->seriesId] = $singleseries->title;
+                }
+            } else {
+                $result[$singleseries->seriesId] = $singleseries->title;
+            }
+        }
+        if ($result) {
+            return $result;
+        }
+    }
+    return [];
+}
+
+/**
+ * Get all possible lv-series that are not yet created in opencast
+ *
+ * @param int $courseid Moodle Kurs ID
+ * @return array|null Return an array with keys: 'TID_Term' and values: Title of series
+ */
+function local_ustreamseries_get_possible_course_series($courseid = null) {
+
+    $api = api::get_instance();
+
+    try {
+        $response = $api->oc_get('/v1/campus/univie/lva/byMoodleCourseId/' . $courseid.'?withoutSeries=true');
+    } catch (Exception $e) {
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
+        return null;
+    }
+
+    if ($api->get_http_code() == 200) {
+        $series = json_decode($response);
+    } else if ($api->get_http_code() == 500) {
+        \core\notification::error(get_string('error_coursenotfound', 'local_ustreamseries', $courseid));
+    } else {
+        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
+    }
+
+    if ($series) {
+        $result = array ();
+        foreach ($series as $singleseries) {
+            $singleid = str_replace('.', '-', $singleseries->id);
+            $resultkey = $singleid.'_'.$singleseries->term;
+            $result[$resultkey] = $singleseries->title;
+        }
+        if ($result) {
+            return $result;
+        }
+    }
+    return null;
+}
+
+/**
+ * Get all Opencast series, already imported into this course.
+ *
+ * @param int $courseid Moodle Kurs ID
+ * @return array $result seriesid -> seriestitle or null
+ */
+function local_ustreamseries_get_connected_course_series($courseid) {
+
+    $apibridge = apibridge::get_instance();
+    $series = $apibridge->get_course_series($courseid);
+    $result = [];
+    if ($series) {
+
+        foreach ($series as $singleseries) {
+            $ocseries = $apibridge->get_series_by_identifier($singleseries->series);
+            if ($ocseries != null) {
+                $result[$singleseries->series] = $ocseries->title;
+            } else {
+                \core\notification::error(get_string('error_no_series_found', 'local_ustreamseries', $singleseries->series));
+            }
+        }
+    }
+
+    if ($result) {
+        return $result;
+    } else {
+        return null;
+    }
+}
+
 /**
  * Connect an opencast series with a moodle course.
  *
@@ -81,79 +192,12 @@ function local_ustreamseries_connect($courseid, $ocseriesid) {
 }
 
 /**
- * Get an array of series connected to this moodle course in i3v, but still not connected with the course.
- *
- * @param int $courseid Moodle Kurs ID
- * @return array|null Return an array with seriesid -> seriestitle mappings or ['emptyseries' => 'Leere Serie'] or null
+ * Creates a series in u:stream and connects it with moodle
+ * @param int $courseid the id of the course for the series
+ * @param string $name the name of the series. If null, take from block-settings
+ * @return object $result true/false
  */
-function local_ustreamseries_get_all_unconnected_course_series($courseid) {
-
-    $api = api::get_instance();
-
-    $response = $api->oc_get('/v1/campus/univie/series/byMoodleCourseId/' . $courseid);
-
-    if ($api->get_http_code() == 200) {
-        $series = json_decode($response);
-    } else if ($api->get_http_code() == 500) {
-        \core\notification::error(get_string('error_coursenotfound', 'local_ustreamseries', $courseid));
-    } else {
-        \core\notification::error(get_string('error_reachustream', 'local_ustreamseries').$response);
-    }
-
-    if ($series) {
-        $connectedseries = local_ustreamseries_get_connected_course_series($courseid);
-        $result = array ();
-        foreach ($series as $singleseries) {
-            if ($connectedseries) {
-                if (!array_key_exists($singleseries->seriesId, $connectedseries)) {
-                        $result[$singleseries->seriesId] = $singleseries->title;
-                }
-            } else {
-                $result[$singleseries->seriesId] = $singleseries->title;
-            }
-        }
-        if ($result) {
-            return $result;
-        }
-    }
-    return null;
-}
-
-/**
- * Get all Opencast series, already imported into this course.
- *
- * @param int $courseid Moodle Kurs ID
- * @return array $result seriesid -> seriestitle or null
- */
-function local_ustreamseries_get_connected_course_series($courseid) {
-
-    $apibridge = apibridge::get_instance();
-    $series = $apibridge->get_course_series($courseid);
-    $result = [];
-    if ($series) {
-
-        foreach ($series as $singleseries) {
-            $ocseries = $apibridge->get_series_by_identifier($singleseries->series);
-            $result[$singleseries->series] = $ocseries->title;
-        }
-    }
-
-    if ($result) {
-        return $result;
-    } else {
-        return null;
-    }
-}
-
-
-  /**
-   * Creates a series in u:stream and connects it with moodle
-   * @param int $courseid the id of the course for the series
-   * @param boolean $courseseries if this series is a course series
-   * @param string $name the name of the series
-   * @return bool $result true/false
-   */
-function local_ustreamseries_create_series($courseid, $courseseries = false, $name = null) {
+function local_ustreamseries_create_personal_series($courseid, $name = null) {
     global $USER;
 
     $apibridge = apibridge::get_instance();
@@ -170,21 +214,58 @@ function local_ustreamseries_create_series($courseid, $courseseries = false, $na
     $api = api::get_instance();
 
     $newseries = str_replace('"', '', $api->oc_post('/v0/series', $params));
-
     $result = $apibridge->import_series_to_course_with_acl_change($courseid, $newseries, $USER->id);
-
-    if ($courseseries) {
-        return $result; // TODO: enrol.
-    }
 
     if ($result->error == 1) {
         \core\notification::error(get_string('error_createseries', 'local_ustreamseries'));
-        return $result;
+        return null;
     } else {
         $result->seriestitle = $apibridge->get_series_by_identifier($newseries)->title;
         return $result;
     }
 
+}
+
+/**
+ * Creates a series in u:stream and connects it with moodle
+ * @param int $courseid the id of the course for the series
+ * @param string $identifyer string consisting of "TID_Term"
+ * @return object|null $result object with further information
+ */
+function local_ustreamseries_create_lv_series($courseid, $identifyer = null) {
+    global $USER;
+
+    $apibridge = apibridge::get_instance();
+
+    $params = [];
+    $params['provider'] = 'univie';
+    if ($identifyer) {
+        list($tid, $term) = explode('_', $identifyer);
+        $params['courseId'] = str_replace('-', '.', $tid);
+        $tid;
+        $params['term'] = $term;
+    } else {
+        \core\notification::error(get_string('error_createseries', 'local_ustreamseries'));
+        return null;
+    }
+
+    $api = api::get_instance();
+
+    $newseries = str_replace('"', '', $api->oc_put('/v0/campus/course/univie/enroll', $params));
+    if ($newseries != "") {
+        $result = $apibridge->import_series_to_course_with_acl_change($courseid, $newseries, $USER->id);
+    } else {
+        \core\notification::error(get_string('error_createseries', 'local_ustreamseries'));
+        return null;
+    }
+
+    if ($result->error === 1) {
+        \core\notification::error(get_string('error_createseries', 'local_ustreamseries'));
+        return null;
+    } else {
+        $result->seriestitle = $apibridge->get_series_by_identifier($newseries)->title;
+        return $result;
+    }
 }
 
 /**
@@ -238,8 +319,12 @@ function local_ustreamseries_check_user_edit_permission($ocseriesid, $userid = n
         $userid = $USER->id;
     }
 
+    if (is_siteadmin($userid)) {
+        return true;
+    }
+
     if (!ctype_xdigit(str_replace(' ', '', str_replace('-', '', $ocseriesid)))) {
-        \core\notification::error(get_string('error_noseriesid', 'local_ustreamseries'));
+        \core\notification::error(get_string('error_no_valid_seriesid', 'local_ustreamseries'));
         return false;
     }
 

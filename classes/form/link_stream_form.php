@@ -44,87 +44,106 @@ class link_stream_form extends \moodleform {
      * Form definition method.
      */
     public function definition() {
-        global $COURSE;
+        global $COURSE, $PAGE;
         $mform = $this->_form;
         $courseid = $COURSE->id;
         $context = \context_course::instance($courseid);
-        $options = [];
-        if (has_capability('local/ustreamseries:link', $context) && local_ustreamseries_is_lv($courseid)) {
-            $options[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
+
+        $islv = local_ustreamseries_is_lv($courseid);
+        if ($islv) {
+            $unconnseries = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
+            $possiblelvseries = local_ustreamseries_get_possible_course_series($COURSE->id);
+        } else {
+            $unconnseries = [];
+            $possiblelvseries = [];
         }
 
-        if (has_capability('local/ustreamseries:create_lv', $context) && local_ustreamseries_is_lv($courseid)) {
-
-            $options[LOCAL_USTREAMSERIES_CREATE_LV] = get_string('link_stream_form_create_lv', 'local_ustreamseries');
+        $createoptions = [];
+        if (has_capability('local/ustreamseries:create_lv', $context) && $possiblelvseries ) {
+            $createoptions = $possiblelvseries;
         }
-
-        if (has_any_capability(['local/ustreamseries:link_other', 'local/ustreamseries:create'], $context)
-            && has_any_capability(['local/ustreamseries:link', 'local/ustreamseries:create_lv'], $context)
-            && local_ustreamseries_is_lv($courseid)) {
-            $options['LINE'] = '_____________________________';
+        if (has_capability('local/ustreamseries:create_personal', $context)) {
+            $createoptions[LOCAL_USTREAMSERIES_CREATE_PERSONAL] = get_string('link_stream_form_create_personal', 'local_ustreamseries');
         }
-
+        $linkoptions = [];
+        if (has_capability('local/ustreamseries:link_lv', $context)) {
+            $linkoptions = $unconnseries;
+        }
         if (has_capability('local/ustreamseries:link_other', $context)) {
-            $options[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
+            $linkoptions[LOCAL_USTREAMSERIES_LINK_OTHER] = get_string('link_stream_form_link_other', 'local_ustreamseries');
         }
-
-        if (has_capability('local/ustreamseries:create', $context)) {
-            $options[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
+        $actionoptions = [];
+        if ($createoptions) {
+            $actionoptions[LOCAL_USTREAMSERIES_CREATE] = get_string('link_stream_form_create', 'local_ustreamseries');
+        }
+        if ($linkoptions) {
+            $actionoptions[LOCAL_USTREAMSERIES_LINK] = get_string('link_stream_form_link', 'local_ustreamseries');
+        }
+        if (!$actionoptions) {
+            $mform->addElement('text', 'nooptionsavailable', get_string('link_stream_form_nooptionsavailable', 'local_ustreamseries'));
+            return;
         }
 
         $mform->addElement('hidden', 'id', $courseid);
         $mform->setType('id', PARAM_INT);
-        $mform->addElement('select', 'action', get_string('link_stream_form_select_action', 'local_ustreamseries'), $options);
+
+        $mform->addElement('select', 'action', get_string('link_stream_form_select_action', 'local_ustreamseries'), $actionoptions);
         $mform->setType('action', PARAM_ACTION);
-
-        if (local_ustreamseries_is_lv($courseid)) {
-            $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK);
-        } else {
-            $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK_OTHER);
-        }
-
+        $mform->setDefault('action', LOCAL_USTREAMSERIES_LINK);
         $mform->addHelpButton('action', 'link_stream_form_select_action', 'local_ustreamseries');
 
-        $mform->addElement('text', 'seriesname', get_string('link_stream_form_seriesname', 'local_ustreamseries' ), 'size="20"');
-        $mform->setType('seriesname', PARAM_TEXT);
-        $mform->hideif('seriesname', 'action', 'eq', LOCAL_USTREAMSERIES_LINK);
-        $mform->hideif('seriesname', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
+        // First we start with the create part of the form.
+        if (count($createoptions) > 1) {
+            $mform->addElement('select', 'createselect',
+                get_string('link_stream_form_createselect', 'local_ustreamseries'), $createoptions);
+            $mform->setType('createselect', PARAM_ALPHANUMEXT);
+            $mform->hideIf('createselect', 'action', 'neq', LOCAL_USTREAMSERIES_CREATE);
+            $mform->addHelpButton('createselect', 'link_stream_form_createselect', 'local_ustreamseries');
+            $mform->setDefault('createselect', array_key_first($createoptions));
+        } else if ($createoptions) {
+            $mform->addElement('hidden', 'createselect', array_key_first($createoptions));
+            $mform->setType('createselect', PARAM_ALPHANUMEXT);
+        }
+        if ($createoptions) {
+            $mform->addElement('text', 'seriesname',
+                get_string('link_stream_form_seriesname', 'local_ustreamseries' ),
+                'size="20"');
+            $mform->setType('seriesname', PARAM_TEXT);
+            $mform->hideif('seriesname', 'action', 'neq', LOCAL_USTREAMSERIES_CREATE);
 
-        $unconnseries = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
+            $mform->hideIf('seriesname', 'createselect', 'neq', LOCAL_USTREAMSERIES_CREATE_PERSONAL);
+        }
 
-        if ($unconnseries) {
+        if ($linkoptions) {
             if (count($unconnseries) > 1) {
+                // Now we go on with the link part of the form
                 $mform->addElement('checkbox', 'linkallcourseseries',
                     get_string('link_stream_form_link_all_course_series', 'local_ustreamseries'));
                 $mform->setType('linkallcourseseries', PARAM_BOOL);
-                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-                $mform->hideIf('linkallcourseseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
+                $mform->hideIf('linkallcourseseries', 'action', 'neq', LOCAL_USTREAMSERIES_LINK);
             }
-            $mform->addElement('select', 'seriesidselect',
-                get_string('link_stream_form_series_id_select', 'local_ustreamseries'), $unconnseries);
-            $mform->setType('seriesidselect', PARAM_ALPHANUMEXT);
-            $mform->hideIf('seriesidselect', 'linkallcourseseries', 'neq', '');
-            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-            $mform->hideIf('seriesidselect', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-        } else {
-            $mform->addElement('select', 'noseries',
-                get_string('link_stream_form_no_course_series_to_connect', 'local_ustreamseries'),
-                array('noseries' => 'There is no series to connect'));
-            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_LINK_OTHER);
-            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-            $mform->hideIf('noseries', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-            $mform->addHelpButton('noseries', 'link_stream_form_no_course_series_to_connect', 'local_ustreamseries');
+            if (count($linkoptions) > 1) {
+                $mform->addElement('select', 'linkselect',
+                    get_string('link_stream_form_linkselect', 'local_ustreamseries'), $linkoptions);
+                $mform->setType('linkselect', PARAM_ALPHANUMEXT);
+                $mform->hideIf('linkselect', 'action', 'neq', LOCAL_USTREAMSERIES_LINK);
+                $mform->hideIf('linkselect', 'linkallcourseseries', 'eq', 'checked');
+            } else {
+                $mform->addElement('hidden', 'linkselect', array_key_first($linkoptions));
+                $mform->setType('linkselect', PARAM_ALPHANUMEXT);
+            }
         }
-
-        $mform->addElement('text', 'seriesid', get_string('link_stream_form_series_id', 'local_ustreamseries'));
-        $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_LINK);
-        $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE_LV);
-        $mform->hideIf('seriesid', 'action', 'eq', LOCAL_USTREAMSERIES_CREATE);
-        $mform->setType('seriesid', PARAM_ALPHANUMEXT);
-        $mform->addHelpButton('seriesid', 'link_stream_form_series_id', 'local_ustreamseries');
-
+        if (has_capability('local/ustreamseries:link_other', $context)) {
+            $mform->addElement('text', 'seriesid', get_string('link_stream_form_series_id', 'local_ustreamseries'));
+            $mform->setType('seriesid', PARAM_ALPHANUMEXT);
+            $mform->addHelpButton('seriesid', 'link_stream_form_series_id', 'local_ustreamseries');
+            $mform->hideIf('seriesid', 'action', 'neq', LOCAL_USTREAMSERIES_LINK);
+            if ($unconnseries) {
+                $mform->hideIf('seriesid', 'linkallcourseseries', 'eq', 'checked');
+                $mform->hideIf('seriesid', 'linkselect', 'neq', LOCAL_USTREAMSERIES_LINK_OTHER);
+            }
+        }
+        $PAGE->requires->js_call_amd('local_ustreamseries/link_stream_form_headings', 'init');
         $this->add_action_buttons(true, get_string('runbutton', 'local_ustreamseries'));
 
     }
@@ -143,36 +162,52 @@ class link_stream_form extends \moodleform {
         $context = \context_course::instance($COURSE->id);
         switch ($data['action']) {
             case LOCAL_USTREAMSERIES_CREATE:
-                require_capability('local/ustreamseries:create', $context);
-                break;
-            case LOCAL_USTREAMSERIES_CREATE_LV:
-                require_capability('local/ustreamseries:create_lv', $context);
-                break;
-            case LOCAL_USTREAMSERIES_LINK:
-                require_capability('local/ustreamseries:link', $context);
-                $unconnected = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
-
-                if ($data['seriesidselect']) {
-                    if (!$unconnected[$data['seriesidselect']]) {
-                        $errors['seriesidselect'] = get_string('seriesnotexistsorconnected', 'local_ustreamseries');
+                if ($data['createselect'] == LOCAL_USTREAMSERIES_CREATE_PERSONAL) {
+                    require_capability('local/ustreamseries:create_personal', $context);
+                    if (!$data['seriesname'] || $data['seriesname'] == "") {
+                        $errors['seriesname'] = get_string('error_no_seriesname', 'local_ustreamseries');
                     }
-
+                } else {
+                    require_capability('local/ustreamseries:create_lv', $context);
+                    $result = array_key_exists($data['createselect'], local_ustreamseries_get_possible_course_series($COURSE->id));
+                    if (!$result) {
+                        $errors['createselect'] = get_string('link_stream_form_series_canntot_be_created', 'local_ustreamseries');
+                    }
                 }
                 break;
-            case LOCAL_USTREAMSERIES_LINK_OTHER:
-                require_capability('local/ustreamseries:link_other', $context);
-                $connected = local_ustreamseries_get_connected_course_series($COURSE->id);
-                if ($connected) {
-                    if (array_key_exists($data['seriesid'], $connected)) {
-                        $errors['seriesid'] = get_string('link_stream_form_seriesalreadyconnected', 'local_ustreamseries');
-                    } else if (!local_ustreamseries_check_series_exists($data['seriesid'])) {
-                        $errors['seriesid'] = get_string('link_stream_form_seriesnotexistsorconnected', 'local_ustreamseries');
+            case LOCAL_USTREAMSERIES_LINK:
+                if (array_key_exists('linkselect', $data) && $data['linkselect'] != LOCAL_USTREAMSERIES_LINK_OTHER) {
+                    // Unconnected series from the list.
+                    require_capability('local/ustreamseries:link_lv', $context);
+                    $unconnected = local_ustreamseries_get_all_unconnected_course_series($COURSE->id);
+                    if (!$unconnected[$data['linkselect']]) {
+                        $connected = local_ustreamseries_get_connected_course_series($COURSE->id);
+                        if (!$connected[$data['linkselect']]) {
+                            $errors['linkselect'] = get_string('link_stream_form_seriesnotexists', 'local_ustreamseries');
+                        } else {
+                            $errors['linkselect'] = get_string('link_stream_form_seriesalreadyconnected', 'local_ustreamseries');
+                        }
+                    }
+                } else if (array_key_exists('linkselect', $data) && $data['linkselect'] == LOCAL_USTREAMSERIES_LINK_OTHER) {
+                    // Link from the text field.
+                    require_capability('local/ustreamseries:link_other', $context);
+                    if (!$data['seriesid'] || $data['seriesid'] == "") {
+                        $errors['seriesid'] = get_string('error_no_seriesid', 'local_ustreamseries');
+                    }
+                    $connected = local_ustreamseries_get_connected_course_series($COURSE->id);
+                    if ($connected) {
+                        if (array_key_exists($data['seriesid'], $connected)) {
+                            $errors['seriesid'] = get_string('link_stream_form_seriesalreadyconnected', 'local_ustreamseries');
+                        } else if (!local_ustreamseries_check_series_exists($data['seriesid'])) {
+                            $errors['seriesid'] = get_string('link_stream_form_seriesnotexists', 'local_ustreamseries');
+                        }
                     }
                 }
                 break;
             default:
-                return ['action' => get_string('undefined_action', 'local_ustreamseries')];
+                $errors['action'] = get_string('undefined_action', 'local_ustreamseries');
                 break;
         }
+        return $errors;
     }
 }

@@ -63,6 +63,9 @@ $PAGE->set_context($coursecontext);
 $PAGE->set_title(get_string('link_ustream', 'local_ustreamseries'));
 $PAGE->set_heading($course->fullname);
 
+$blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $id));
+$blockstring = get_string('link_to_block', 'local_ustreamseries');
+
 $mform = new \local_ustreamseries\form\link_stream_form();
 
 if ($mform->is_cancelled()) {
@@ -73,36 +76,46 @@ if ($mform->is_cancelled()) {
 $formdata = $mform->get_data();
 if ($formdata) {
     if ($formdata->action == LOCAL_USTREAMSERIES_CREATE) {
-        $result = local_ustreamseries_create_series($id, false, $formdata->seriesname);
 
-        if ($result->error == 0) {
-            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
-        }
-    } else if ($formdata->action == LOCAL_USTREAMSERIES_CREATE_LV) {
-        $result = local_ustreamseries_create_series($id, true, $formdata->seriesname);
-        if ($result->error == 0) {
-            \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $result->seriestitle));
+        if ($formdata->createselect == LOCAL_USTREAMSERIES_CREATE_PERSONAL) {
+            $result = local_ustreamseries_create_personal_series($id, $formdata->seriesname);
+            if ($result) {
+                $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
+                \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $successmessage));
+            }
+        } else {
+            $result = local_ustreamseries_create_lv_series($id, $formdata->createselect);
+            if ($result) {
+                $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
+                \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $successmessage));
+            }
         }
     } else if ($formdata->action == LOCAL_USTREAMSERIES_LINK) {
+        $result = null;
         if ($formdata->linkallcourseseries) {
-            foreach (local_ustreamseries_get_all_unconnected_course_series($COURSE->id) as $courseserieskey => $courseseriesvalue) {
+            foreach (local_ustreamseries_get_all_unconnected_course_series($id) as $courseserieskey => $courseseriesvalue) {
                 $result = null;
                 $result = local_ustreamseries_connect($id, $courseserieskey);
                 if ($result) {
-                    \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
+                    $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
+                    \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $successmessage));
                 }
             }
-        } else {
-            $result = local_ustreamseries_connect($id, $formdata->seriesidselect);
+        } else if ($formdata->linkselect == LOCAL_USTREAMSERIES_LINK_OTHER) { // A series from text field.
+            $result = local_ustreamseries_connect($id, $formdata->seriesid);
             if ($result) {
-                \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
+                $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
+                \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $successmessage));
+            } else {
+                $formdata->seriesid = '';
+                $mform->set_data($formdata);
             }
-        }
-    } else if ($action == LOCAL_USTREAMSERIES_LINK_OTHER) {
-        $result = local_ustreamseries_connect($id, $formdata->seriesid);
-
-        if ($result) {
-            \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $result->seriestitle));
+        } else { // A LV series from the list.
+            $result = local_ustreamseries_connect($id, $formdata->linkselect);
+            if ($result) {
+                $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
+                \core\notification::info(get_string('series_link_success', 'local_ustreamseries', $successmessage));
+            }
         }
     }
 }
@@ -127,8 +140,7 @@ if ($series) {
     $PAGE->requires->css('/blocks/opencast/css/tabulator_bootstrap4.min.css');
 }
 echo $OUTPUT->header();
-$blockurl = new \moodle_url('/blocks/opencast/index.php', array('courseid' => $COURSE->id));
-$blockstring = get_string('link_to_block', 'local_ustreamseries');
+
 echo "<a href=\"$blockurl\" id=\"local_ustream_link_to_block\"
       class=\"d-flex flex-wrap flex-row-reverse m-b-1 text-right\">$blockstring</a>";
 if ($series) {
