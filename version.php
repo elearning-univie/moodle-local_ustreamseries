@@ -32,6 +32,6 @@ $plugin->release = 'v0.1.7';
 
 $plugin->dependencies = [
   'block_opencast' => 2022111900,
-  'tool_opencast' => 2021122000,
+  'tool_opencast' => 2022111900,
   'mod_streamlti' => 2021051100
 ];
