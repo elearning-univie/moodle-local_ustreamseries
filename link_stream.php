@@ -48,6 +48,8 @@
 require_once("../../config.php");
 require_once("locallib.php");
 
+global $PAGE, $OUTPUT, $DB;
+
 $id = required_param('id', PARAM_INT);
 $action = optional_param('action', null, PARAM_ALPHA);
 require_login($id);
@@ -120,22 +122,26 @@ if ($formdata) {
     }
 }
 
-
 $series = $DB->get_records('tool_opencast_series', array('courseid' => $id));
 // Transform isdefault to int.
 array_walk($series, function ($item) {
     $item->isdefault = intval($item->isdefault);
 });
 
-
-
 if ($series) {
     $ocinstanceid = 1;
     $templatecontext = new stdClass();
-    $templatecontext->series = json_encode(array_values($series));
     $templatecontext->addseriesallowed = count($series) < get_config('block_opencast', 'maxseries_' . $ocinstanceid);
-    $templatecontext->numseriesallowed = get_config('block_opencast', 'maxseries_' . $ocinstanceid);
-    $PAGE->requires->js_call_amd('block_opencast/block_manage_series', 'init', [$coursecontext->id, $ocinstanceid]);
+
+    $params = [
+        $coursecontext->id,
+        $ocinstanceid,
+        0,
+        array_values($series),
+        get_config('block_opencast', 'maxseries_' . $ocinstanceid)
+    ];
+
+    $PAGE->requires->js_call_amd('block_opencast/block_manage_series', 'init', $params);
     $PAGE->requires->css('/blocks/opencast/css/tabulator.min.css');
     $PAGE->requires->css('/blocks/opencast/css/tabulator_bootstrap4.min.css');
 }
