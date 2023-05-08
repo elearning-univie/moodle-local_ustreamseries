@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023022101;
+$plugin->version = 2023050800;
 $plugin->requires = 2020110900;
 $plugin->component = 'local_ustreamseries';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v0.1.7';
+$plugin->release = 'v0.1.8';
 
 $plugin->dependencies = [
   'block_opencast' => 2022111900,
