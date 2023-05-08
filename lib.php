@@ -26,13 +26,40 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
+ * Adds the ustream item to the course navigation
+ *
+ * @param navigation_node $navigation
+ * @param stdClass $course
+ * @param context_course $context
+ * @return void
+ * @throws coding_exception
+ * @throws moodle_exception
+ */
+function local_ustreamseries_extend_navigation_course(navigation_node $navigation, stdClass $course, context_course $context) {
+    global $DB, $CFG;
+
+    if (!has_capability('local/ustreamseries:view', $context) || $CFG->version < 2022041900) {
+        return;
+    }
+
+    $url = new moodle_url('/local/ustreamseries/index.php', array('id' => $course->id));
+    $title = get_string('navigationname', 'local_ustreamseries');
+    $pix = new pix_icon('play', 'open u:stream', 'block_opencast');
+    $newnode = navigation_node::create($title, $url, navigation_node::TYPE_CUSTOM, 'ustreamseries',
+        'ustreamseries', $pix);
+
+    $navigation->add_node($newnode);
+}
+
+
+/**
  * This function extends the navigation with the ustream item
  *
  * @param navigation_node $navigation
  */
 function local_ustreamseries_extend_navigation($navigation) {
-    global $USER, $PAGE, $DB;
-    if (empty($USER->id)) {
+    global $USER, $PAGE, $DB, $CFG;
+    if (empty($USER->id) || $CFG->version >= 2022041900) {
         return;
     }
 
