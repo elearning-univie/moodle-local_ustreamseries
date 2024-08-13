@@ -85,12 +85,16 @@ if ($formdata) {
                 $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
                 \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $successmessage));
             }
+            $redirecturl = new moodle_url('/local/ustreamseries/link_stream.php',['id' => $id]);
+            redirect($redirecturl);
         } else {
             $result = local_ustreamseries_create_lv_series($id, $formdata->createselect);
             if ($result) {
                 $successmessage = array('title' => $result->seriestitle, 'link' => $blockurl->out());
                 \core\notification::info(get_string('series_creation_success', 'local_ustreamseries', $successmessage));
             }
+            $redirecturl = new moodle_url('/local/ustreamseries/link_stream.php',['id' => $id]);
+            redirect($redirecturl);
         }
     } else if ($formdata->action == LOCAL_USTREAMSERIES_LINK) {
         $result = null;
