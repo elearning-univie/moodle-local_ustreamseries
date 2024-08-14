@@ -15,23 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This is the version.php for local_ustreamseries.
+ * Hook callbacks for Policies
  *
- * @package   local_ustreamseries
- * @copyright 2021, University of Vienna
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_policy
+ * @copyright  2024 Andrew Lyons <andrew@nicols.co.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024081400;
-$plugin->requires = 2020110900;
-$plugin->component = 'local_ustreamseries';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v0.1.9';
-
-$plugin->dependencies = [
-  'block_opencast' => 2022111900,
-  'tool_opencast' => 2022111900,
-  'mod_streamlti' => 2021051100
-];
+$callbacks = [
+    [
+        'hook' => \core\hook\output\before_standard_top_of_body_html_generation::class,
+        'callback' => \local_ustreamseries\hooks\callbacks::class . '::before_standard_top_of_body_html_generation',
+        'priority' => 0,
+    ],
+    ];

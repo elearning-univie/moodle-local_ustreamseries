@@ -138,32 +138,4 @@ function local_ustreamseries_extend_navigation($navigation) {
 }
 
 
-/**
- * JS for inserting a link to the ustreamseries-dialogue and changing the title.
- *
- * @return string|void
- * @throws coding_exception
- * @throws dml_exception
- * @throws moodle_exception
- */
-function local_ustreamseries_before_standard_top_of_body_html() {
-    global $PAGE, $COURSE, $OUTPUT;
-    $context = context_course::instance($COURSE->id);
-    if (!(strpos($PAGE->url->get_path(), '/blocks/opencast/index.php') !== false) || !has_any_capability(
-        ['local/ustreamseries:create_personal', 'local/ustreamseries:create_lv',
-             'local/ustreamseries:link_lv', 'local/ustreamseries:link_other'],
-        $context)) {
-        return;
-    }
-    $templatecontext = [];
-    $link = new moodle_url('/local/ustreamseries/link_stream.php', ['id' => $COURSE->id]);
-    $templatecontext['url'] = $link->out();
-    $templatecontext['title'] = get_string('link_stream_settingsmenu_short', 'local_ustreamseries');
-    $templatecontext['text'] = get_string('link_stream_settingsmenu', 'local_ustreamseries');
-    $rendered = $OUTPUT->render_from_template('local_ustreamseries/series_link', $templatecontext);
-
-    $pluginname = get_string('pluginname', 'block_opencast');
-    $PAGE->requires->js_call_amd('local_ustreamseries/blockindexpatches', 'init', [$rendered, $COURSE->fullname, $pluginname]);
-
-}
 
